@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
 /**
@@ -9,7 +9,7 @@ export function CountUp({ value, className }: { value: string; className?: strin
   const reduced = useReducedMotion();
   const ref = useRef<HTMLSpanElement | null>(null);
   const [display, setDisplay] = useState(value);
-  const match = /^([^\d]*)(\d+(?:\.\d+)?)(.*)$/.exec(value);
+  const match = useMemo(() => /^([^\d]*)(\d+(?:\.\d+)?)(.*)$/.exec(value), [value]);
   const shouldAnimate = !reduced && !!match;
 
   useEffect(() => {

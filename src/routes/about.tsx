@@ -17,6 +17,11 @@ export const Route = createFileRoute("/about")({
         property: "og:description",
         content: "How I work as a player-coach designer, and the kinds of problems I want next.",
       },
+      { name: "twitter:title", content: "About — Matt Reynolds" },
+      {
+        name: "twitter:description",
+        content: "How I work as a player-coach designer, and the kinds of problems I want next.",
+      },
     ],
   }),
   component: AboutPage,
@@ -27,7 +32,6 @@ const bio = [
   "That started at Boeing, where a bad interface delays an airplane, and continued through Expedia's travel and conversational products, Uber's live two-sided marketplace, Meta's consent and privacy infrastructure, and most recently generative AI product design at TikTok — agents, avatars, voice, scripts, image, and video for advertisers and creators.",
   "The pattern that repeats: I define the product model, turn the edge cases into system behavior, design the interface, and stay involved through implementation and release. I like the part of the work where an ambitious idea meets what the system can actually promise, because that is where the design decision lives.",
 ];
-
 
 function AboutPage() {
   return (

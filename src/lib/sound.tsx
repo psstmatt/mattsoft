@@ -15,8 +15,10 @@ const SoundContext = createContext<SoundApi>({
   play: () => {},
 });
 
-
-const RECIPES: Record<Tone, { freq: number; to: number; gain: number; dur: number; type: OscillatorType }> = {
+const RECIPES: Record<
+  Tone,
+  { freq: number; to: number; gain: number; dur: number; type: OscillatorType }
+> = {
   hover: { freq: 1180, to: 1180, gain: 0.014, dur: 0.045, type: "sine" },
   click: { freq: 420, to: 300, gain: 0.05, dur: 0.09, type: "triangle" },
   reveal: { freq: 620, to: 880, gain: 0.018, dur: 0.16, type: "sine" },
@@ -28,10 +30,11 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const ctxRef = useRef<AudioContext | null>(null);
   const lastRef = useRef(0);
 
-
   const getCtx = useCallback(() => {
     if (typeof window === "undefined") return null;
-    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     if (!ctxRef.current) ctxRef.current = new Ctor();
     if (ctxRef.current.state === "suspended") void ctxRef.current.resume().catch(() => {});

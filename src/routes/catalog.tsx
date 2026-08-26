@@ -15,7 +15,14 @@ export const Route = createFileRoute("/catalog")({
       { property: "og:title", content: "Work catalog — Matt Reynolds" },
       {
         property: "og:description",
-        content: "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, Boeing, and independent products.",
+        content:
+          "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, Boeing, and independent products.",
+      },
+      { name: "twitter:title", content: "Work catalog — Matt Reynolds" },
+      {
+        name: "twitter:description",
+        content:
+          "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, Boeing, and independent products.",
       },
     ],
   }),
@@ -64,7 +71,9 @@ function CatalogPage() {
                       {item.years}
                     </span>
                   </div>
-                  <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">{item.note}</p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
+                    {item.note}
+                  </p>
                 </Reveal>
               );
             })}

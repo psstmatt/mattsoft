@@ -3,7 +3,6 @@ import { cases, howIWork, site } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
 
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -16,6 +15,12 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Matt Reynolds — Product & Software Designer" },
       {
         property: "og:description",
+        content:
+          "Fifteen years turning complex systems into products people can trust. Selected work from TikTok, Meta, Uber, Expedia, and Boeing.",
+      },
+      { name: "twitter:title", content: "Matt Reynolds — Product & Software Designer" },
+      {
+        name: "twitter:description",
         content:
           "Fifteen years turning complex systems into products people can trust. Selected work from TikTok, Meta, Uber, Expedia, and Boeing.",
       },
@@ -109,7 +114,6 @@ function Index() {
           </p>
         </Reveal>
       </section>
-
     </div>
   );
 }

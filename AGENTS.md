@@ -1,10 +1,8 @@
-<!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
+> This public repository is an independent, clean-history import. It is not the
+> repository connected to Lovable. The untouched private source backup is
+> `psstmatt/motion-whisper-portfolio` at
+> `50de093c6d9a3935225a7de0672c0618d905e095`.
 >
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+> Keep Vercel work Preview-only unless the user explicitly authorizes a
+> Production deployment, alias, domain, or DNS change.

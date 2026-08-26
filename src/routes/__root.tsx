@@ -9,10 +9,9 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SoundProvider } from "../lib/sound";
 import { Header, Footer } from "../components/chrome";
 
@@ -33,9 +32,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="mx-auto w-full max-w-[68ch] px-6 py-24">
@@ -71,17 +67,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Matt Reynolds turns complex, high-stakes systems into simple products. GenAI at TikTok, consent at Meta, marketplaces at Uber, operations at Boeing.",
       },
       { name: "author", content: "Matt Reynolds" },
+      { name: "robots", content: "noindex, nofollow" },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og-image.png" },
+      { property: "og:image:width", content: "1920" },
+      { property: "og:image:height", content: "1080" },
+      { property: "og:image:alt", content: "Matt Reynolds — Product & Software Designer" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "/og-image.png" },
+      { name: "twitter:image:alt", content: "Matt Reynolds — Product & Software Designer" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Work+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap",
-      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),

@@ -1,13 +1,17 @@
 export const site = {
   name: "Matt Reynolds",
-  
+
   throughline:
     "I turn complex, high-stakes systems into simple products — and stay hands-on until they ship.",
   status:
     "Seattle. 15 years across Boeing, Expedia, Uber, Meta, and TikTok. Most recently GenAI product design at TikTok/ByteDance.",
   contact: [
     { label: "Email", value: "mr@hey.com", href: "mailto:mr@hey.com" },
-    { label: "LinkedIn", value: "linkedin.com/in/psstmatt", href: "https://linkedin.com/in/psstmatt" },
+    {
+      label: "LinkedIn",
+      value: "linkedin.com/in/psstmatt",
+      href: "https://linkedin.com/in/psstmatt",
+    },
     { label: "TikTok", value: "@psttmatt", href: "https://tiktok.com/@psttmatt" },
     { label: "Calendar", value: "cal.com/psstmatt", href: "https://cal.com/psstmatt" },
   ],
@@ -61,12 +65,14 @@ export const cases: CaseStudy[] = [
     ],
     result: [
       { value: "#1", label: "most-used feature in the suite (Custom Avatars)" },
-      { value: "60%", label: "reduction in cost per install for campaigns using generated creative" },
+      {
+        value: "60%",
+        label: "reduction in cost per install for campaigns using generated creative",
+      },
       { value: "92%", label: "drop in production cost per avatar spot" },
       { value: "$3.3M", label: "attributed revenue in the first year" },
     ],
-    resultNote:
-      "Figures reflect internal reporting for the advertiser-facing surfaces I led.",
+    resultNote: "Figures reflect internal reporting for the advertiser-facing surfaces I led.",
   },
   {
     slug: "consent",
@@ -206,34 +212,77 @@ export const cases: CaseStudy[] = [
   },
 ];
 
-export type CatalogGroup = { company: string; items: { title: string; note: string; years: string }[] };
+export type CatalogGroup = {
+  company: string;
+  items: { title: string; note: string; years: string }[];
+};
 
 export const catalog: CatalogGroup[] = [
   {
     company: "TikTok / ByteDance",
     items: [
-      { title: "Symphony Creative Studio", note: "Multimodal AI ad creation, end to end.", years: "2024—26" },
-      { title: "Custom Avatars", note: "Likeness capture, licensing, and reuse in generated video.", years: "2025" },
-      { title: "Creative Cue", note: "Script ideation grounded in product and audience signals.", years: "2025" },
-      { title: "AI agent surfaces", note: "Agentic creation and review patterns for advertisers.", years: "2025—26" },
+      {
+        title: "Symphony Creative Studio",
+        note: "Multimodal AI ad creation, end to end.",
+        years: "2024—26",
+      },
+      {
+        title: "Custom Avatars",
+        note: "Likeness capture, licensing, and reuse in generated video.",
+        years: "2025",
+      },
+      {
+        title: "Creative Cue",
+        note: "Script ideation grounded in product and audience signals.",
+        years: "2025",
+      },
+      {
+        title: "AI agent surfaces",
+        note: "Agentic creation and review patterns for advertisers.",
+        years: "2025—26",
+      },
     ],
   },
   {
     company: "Meta",
     items: [
-      { title: "Consent Platform", note: "Configuration, preview, and launch of consent flows.", years: "2022—24" },
-      { title: "Consent Design Library", note: "32 reusable components across four apps.", years: "2023" },
-      { title: "Consent Simulator", note: "Preview by brand, surface, language, and regulation.", years: "2023" },
+      {
+        title: "Consent Platform",
+        note: "Configuration, preview, and launch of consent flows.",
+        years: "2022—24",
+      },
+      {
+        title: "Consent Design Library",
+        note: "32 reusable components across four apps.",
+        years: "2023",
+      },
+      {
+        title: "Consent Simulator",
+        note: "Preview by brand, surface, language, and regulation.",
+        years: "2023",
+      },
     ],
   },
   {
     company: "Uber",
     items: [
       { title: "Uber Reserve", note: "Scheduled rides for riders and drivers.", years: "2020—22" },
-      { title: "Multi-driver dispatch", note: "Assignment and reassignment mechanics.", years: "2021" },
-      { title: "Hourly rides", note: "Time-based booking with an open destination.", years: "2021" },
+      {
+        title: "Multi-driver dispatch",
+        note: "Assignment and reassignment mechanics.",
+        years: "2021",
+      },
+      {
+        title: "Hourly rides",
+        note: "Time-based booking with an open destination.",
+        years: "2021",
+      },
       { title: "Fleet Match", note: "Fleet supply matched to demand shape.", years: "2022" },
-      { title: "Shared rides", note: "Multi-rider routing and expectation setting.", years: "2019—20" },
+      {
+        title: "Shared rides",
+        note: "Multi-rider routing and expectation setting.",
+        years: "2019—20",
+      },
       { title: "Identity & rewards", note: "Verification and loyalty surfaces.", years: "2019—21" },
     ],
   },
@@ -241,24 +290,56 @@ export const catalog: CatalogGroup[] = [
     company: "Expedia",
     items: [
       { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—19" },
-      { title: "Price change experiences", note: "Telling travelers what changed and what to do.", years: "2018" },
-      { title: "Bots & Voice", note: "Managed a team of 5+ on conversational travel products.", years: "2017—19" },
+      {
+        title: "Price change experiences",
+        note: "Telling travelers what changed and what to do.",
+        years: "2018",
+      },
+      {
+        title: "Bots & Voice",
+        note: "Managed a team of 5+ on conversational travel products.",
+        years: "2017—19",
+      },
     ],
   },
   {
     company: "Boeing",
     items: [
-      { title: "Aircraft deliveries", note: "Readiness review and handover workflows.", years: "2013—16" },
-      { title: "Enterprise search", note: "Cross-system record retrieval for operations.", years: "2012" },
-      { title: "Internal platforms", note: "Expert tooling for manufacturing operations.", years: "2010—16" },
+      {
+        title: "Aircraft deliveries",
+        note: "Readiness review and handover workflows.",
+        years: "2013—16",
+      },
+      {
+        title: "Enterprise search",
+        note: "Cross-system record retrieval for operations.",
+        years: "2012",
+      },
+      {
+        title: "Internal platforms",
+        note: "Expert tooling for manufacturing operations.",
+        years: "2010—16",
+      },
     ],
   },
   {
     company: "Independent",
     items: [
-      { title: "PetLoop", note: "Private native iPhone pet-memory app. TestFlight.", years: "2025—" },
-      { title: "Electronic Mail", note: "Single-user, action-oriented Gmail client. Working prototype.", years: "2025—" },
-      { title: "Interaction experiments", note: "Motion, sound, and design-tool prototypes.", years: "ongoing" },
+      {
+        title: "PetLoop",
+        note: "Private native iPhone pet-memory app. TestFlight.",
+        years: "2025—",
+      },
+      {
+        title: "Electronic Mail",
+        note: "Single-user, action-oriented Gmail client. Working prototype.",
+        years: "2025—",
+      },
+      {
+        title: "Interaction experiments",
+        note: "Motion, sound, and design-tool prototypes.",
+        years: "ongoing",
+      },
     ],
   },
 ];

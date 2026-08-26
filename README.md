@@ -1,26 +1,31 @@
-# Gentle Motion Portfolio
+# Mattsoft
 
-simple text based portfolio with thoughtful motion and sound. psstmatt.com,
+Matt Reynolds's text-first portfolio, exported from Lovable for independent local development and Vercel review deployments.
 
-This project was built with [Lovable](https://lovable.dev).
+## Source provenance
 
-**Live app**: https://motion-whisper-portfolio.lovable.app
+- Original Lovable project: `b791c73d-1837-469e-b9f9-67d654d497b7`
+- Private source backup: `psstmatt/motion-whisper-portfolio`
+- Imported source commit: `50de093c6d9a3935225a7de0672c0618d905e095`
+- Import method: the tracked tree at that commit was copied without its Git history.
+- Visual baseline: [motion-whisper-portfolio.lovable.app](https://motion-whisper-portfolio.lovable.app)
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b791c73d-1837-469e-b9f9-67d654d497b7).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+The first commit in this repository is the untouched source snapshot. Later commits contain only portability and review-deployment changes.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+The project uses Bun and its committed lockfile.
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```bash
+bun install --frozen-lockfile
+bun run dev
 ```
+
+Available checks:
+
+```bash
+bun run lint
+bun run build
+```
+
+The repository is configured as a noindex review build. Production promotion, aliases, domains, and DNS are intentionally out of scope.
