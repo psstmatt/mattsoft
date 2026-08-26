@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { site } from "@/content/site";
 import { useSound } from "@/lib/sound";
 import { SoundAnchor, SoundLink } from "./sound-link";
@@ -37,6 +38,7 @@ const controlClass =
 export function Header() {
   const { play } = useSound();
   const { dark, toggle: toggleTheme } = useTheme();
+  const themeLabel = dark ? "Switch to light mode" : "Switch to dark mode";
 
   return (
     <header className="mx-auto flex w-full max-w-[68ch] items-baseline justify-between px-6 pt-10 pb-14 sm:pt-14">
@@ -60,10 +62,15 @@ export function Header() {
             toggleTheme();
           }}
           onMouseEnter={() => play("hover")}
-          className={controlClass}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          className={`${controlClass} inline-flex size-5 items-center justify-center align-middle`}
+          aria-label={themeLabel}
+          title={themeLabel}
         >
-          {dark ? "Light" : "Dark"}
+          {dark ? (
+            <Sun className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+          ) : (
+            <Moon className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+          )}
         </button>
       </nav>
     </header>

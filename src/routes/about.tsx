@@ -29,7 +29,7 @@ export const Route = createFileRoute("/about")({
 
 const bio = [
   "I'm a product and software designer in Seattle. Fifteen years, five very different companies, and one consistent job: take a system that is genuinely complicated and make the product on top of it feel obvious.",
-  "That started at Boeing, where a bad interface delays an airplane, and continued through Expedia's travel and conversational products, Uber's live two-sided marketplace, Meta's consent and privacy infrastructure, and most recently generative AI product design at TikTok — agents, avatars, voice, scripts, image, and video for advertisers and creators.",
+  "That started at Boeing, where a bad interface delays an airplane, and continued through Expedia's travel and conversational products, Uber's live two-sided marketplace, Meta's consent and privacy infrastructure, and most recently as a Staff Product Designer at TikTok — agents, avatars, voice, scripts, image, and video for advertisers and creators.",
   "The pattern that repeats: I define the product model, turn the edge cases into system behavior, design the interface, and stay involved through implementation and release. I like the part of the work where an ambitious idea meets what the system can actually promise, because that is where the design decision lives.",
 ];
 

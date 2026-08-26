@@ -4,7 +4,7 @@ export const site = {
   throughline:
     "I turn complex, high-stakes systems into simple products — and stay hands-on until they ship.",
   status:
-    "Seattle. 15 years across Boeing, Expedia, Uber, Meta, and TikTok. Most recently GenAI product design at TikTok/ByteDance.",
+    "Seattle. Staff Product Designer at TikTok. 15 years across Boeing, Expedia, Uber, Meta, and TikTok.",
   contact: [
     { label: "Email", value: "mr@hey.com", href: "mailto:mr@hey.com" },
     {
@@ -28,10 +28,12 @@ export type CaseStudy = {
   problem: string[];
   scope: string[];
   decision: string[];
-  shipped: string[];
+  shipped: CaseStudyListItem[];
   result: { value: string; label: string }[];
   resultNote: string;
 };
+
+export type CaseStudyListItem = string | { text: string; href: string };
 
 export const cases: CaseStudy[] = [
   {
@@ -41,7 +43,7 @@ export const cases: CaseStudy[] = [
     years: "2024 — 2026",
     proof: "Zero-to-one multimodal AI creation for advertisers and creators.",
     headlineMetric: { value: "$23", label: "cost per finished avatar spot, down from ~$300" },
-    role: "Senior Product Designer, GenAI — lead advertiser-facing designer",
+    role: "Staff Product Designer, GenAI — lead advertiser-facing designer",
     problem: [
       "Making platform-native video advertising is expensive, slow, and unfamiliar. An advertiser arrives with a product page and a budget, not a script, a face, a voice, or an edit.",
       "The underlying models could already generate scripts, avatars, voice, images, and video. None of that was a product. Capability was scattered across demos with no shared notion of intent, review, control, or recovery.",
@@ -61,7 +63,10 @@ export const cases: CaseStudy[] = [
       "Public launch of Symphony Creative Studio.",
       "Custom Avatar creation and reuse, Creative Cue ideation, script-to-video assembly, inline editing, and export to ad delivery.",
       "A reusable pattern set for generative state — pending, partial, failed, regenerated, human-edited — adopted by adjacent GenAI surfaces.",
-      "iF Design recognition for the product.",
+      {
+        text: "iF Design recognition for TikTok Symphony AI Creative Studio.",
+        href: "https://ifdesign.com/en/winner-ranking/project/tiktok-symphony-ai-creative-studio/749032",
+      },
     ],
     result: [
       { value: "#1", label: "most-used feature in the suite (Custom Avatars)" },
@@ -178,43 +183,15 @@ export const cases: CaseStudy[] = [
     ],
     resultNote: "Program metrics from launch reporting.",
   },
-  {
-    slug: "petloop",
-    company: "Independent",
-    title: "PetLoop",
-    years: "2025 — present",
-    proof: "A private native iPhone pet-memory app, designed and built solo.",
-    headlineMetric: { value: "100%", label: "on-device — no account, no server, no telemetry" },
-    role: "Everything — product, design, SwiftUI implementation, release",
-    problem: [
-      "The photos of a pet are scattered across years of camera roll, and the good ones surface at random or not at all.",
-      "Existing pet apps want a login, a subscription, and a social graph. The moment does not need any of that.",
-    ],
-    scope: [
-      "Product definition, interaction design, SwiftUI implementation, and TestFlight release.",
-      "Local-first data model, on-device photo selection, and notification pacing.",
-    ],
-    decision: [
-      "No account, no backend. Everything lives on the device.",
-      "That single constraint removed onboarding, privacy copy, sync states, and the entire class of empty-state design that usually eats a small app — and made the first launch a single tap.",
-      "Resurfacing is paced deliberately: infrequent, never on a bad anniversary, always dismissible.",
-    ],
-    shipped: [
-      "Native SwiftUI iPhone app in private TestFlight.",
-      "On-device memory selection, timeline, and gentle resurfacing notifications.",
-    ],
-    result: [
-      { value: "1 tap", label: "from install to first memory" },
-      { value: "0", label: "network requests in normal use" },
-      { value: "68%", label: "of testers open a resurfaced memory" },
-    ],
-    resultNote: "Private TestFlight; small tester group.",
-  },
 ];
+
+const caseOrder = ["symphony", "consent", "reserve", "deliveries"];
+
+cases.sort((a, b) => caseOrder.indexOf(a.slug) - caseOrder.indexOf(b.slug));
 
 export type CatalogGroup = {
   company: string;
-  items: { title: string; note: string; years: string }[];
+  items: { title: string; note: string; years: string; slug?: string }[];
 };
 
 export const catalog: CatalogGroup[] = [
@@ -222,9 +199,15 @@ export const catalog: CatalogGroup[] = [
     company: "TikTok / ByteDance",
     items: [
       {
+        title: "AI agent surfaces",
+        note: "Agentic creation and review patterns for advertisers.",
+        years: "2025—26",
+      },
+      {
         title: "Symphony Creative Studio",
         note: "Multimodal AI ad creation, end to end.",
         years: "2024—26",
+        slug: "symphony",
       },
       {
         title: "Custom Avatars",
@@ -236,11 +219,6 @@ export const catalog: CatalogGroup[] = [
         note: "Script ideation grounded in product and audience signals.",
         years: "2025",
       },
-      {
-        title: "AI agent surfaces",
-        note: "Agentic creation and review patterns for advertisers.",
-        years: "2025—26",
-      },
     ],
   },
   {
@@ -250,6 +228,7 @@ export const catalog: CatalogGroup[] = [
         title: "Consent Platform",
         note: "Configuration, preview, and launch of consent flows.",
         years: "2022—24",
+        slug: "consent",
       },
       {
         title: "Consent Design Library",
@@ -266,7 +245,13 @@ export const catalog: CatalogGroup[] = [
   {
     company: "Uber",
     items: [
-      { title: "Uber Reserve", note: "Scheduled rides for riders and drivers.", years: "2020—22" },
+      { title: "Fleet Match", note: "Fleet supply matched to demand shape.", years: "2022" },
+      {
+        title: "Uber Reserve",
+        note: "Scheduled rides for riders and drivers.",
+        years: "2020—22",
+        slug: "reserve",
+      },
       {
         title: "Multi-driver dispatch",
         note: "Assignment and reassignment mechanics.",
@@ -277,28 +262,31 @@ export const catalog: CatalogGroup[] = [
         note: "Time-based booking with an open destination.",
         years: "2021",
       },
-      { title: "Fleet Match", note: "Fleet supply matched to demand shape.", years: "2022" },
+      {
+        title: "Identity & rewards",
+        note: "Verification and loyalty surfaces.",
+        years: "2019—21",
+      },
       {
         title: "Shared rides",
         note: "Multi-rider routing and expectation setting.",
         years: "2019—20",
       },
-      { title: "Identity & rewards", note: "Verification and loyalty surfaces.", years: "2019—21" },
     ],
   },
   {
     company: "Expedia",
     items: [
+      {
+        title: "Bots & Voice",
+        note: "Managed a team of 5+ on conversational travel products.",
+        years: "2017—19",
+      },
       { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—19" },
       {
         title: "Price change experiences",
         note: "Telling travelers what changed and what to do.",
         years: "2018",
-      },
-      {
-        title: "Bots & Voice",
-        note: "Managed a team of 5+ on conversational travel products.",
-        years: "2017—19",
       },
     ],
   },
@@ -309,36 +297,17 @@ export const catalog: CatalogGroup[] = [
         title: "Aircraft deliveries",
         note: "Readiness review and handover workflows.",
         years: "2013—16",
-      },
-      {
-        title: "Enterprise search",
-        note: "Cross-system record retrieval for operations.",
-        years: "2012",
+        slug: "deliveries",
       },
       {
         title: "Internal platforms",
         note: "Expert tooling for manufacturing operations.",
         years: "2010—16",
       },
-    ],
-  },
-  {
-    company: "Independent",
-    items: [
       {
-        title: "PetLoop",
-        note: "Private native iPhone pet-memory app. TestFlight.",
-        years: "2025—",
-      },
-      {
-        title: "Electronic Mail",
-        note: "Single-user, action-oriented Gmail client. Working prototype.",
-        years: "2025—",
-      },
-      {
-        title: "Interaction experiments",
-        note: "Motion, sound, and design-tool prototypes.",
-        years: "ongoing",
+        title: "Enterprise search",
+        note: "Cross-system record retrieval for operations.",
+        years: "2012",
       },
     ],
   },

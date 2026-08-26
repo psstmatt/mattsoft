@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { cases } from "@/content/site";
+import { cases, type CaseStudyListItem } from "@/content/site";
 import { Reveal } from "@/components/reveal";
-import { SoundLink } from "@/components/sound-link";
+import { SoundAnchor, SoundLink } from "@/components/sound-link";
 import { CountUp } from "@/components/count-up";
 
 export const Route = createFileRoute("/work/$slug")({
@@ -47,7 +47,7 @@ function Section({
 }: {
   label: string;
   paragraphs?: string[];
-  list?: string[];
+  list?: CaseStudyListItem[];
 }) {
   return (
     <section className="mt-20">
@@ -68,11 +68,24 @@ function Section({
       {list && (
         <ul className="mt-6">
           {list.map((item, i) => (
-            <Reveal as="li" key={i} delay={i * 0.04} className="rule-row flex gap-4 py-4">
+            <Reveal
+              as="li"
+              key={typeof item === "string" ? item : item.text}
+              delay={i * 0.04}
+              className="rule-row flex gap-4 py-4"
+            >
               <span className="font-mono text-[11px] text-muted-foreground">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="text-[16px] leading-relaxed">{item}</span>
+              <span className="text-[16px] leading-relaxed">
+                {typeof item === "string" ? (
+                  item
+                ) : (
+                  <SoundAnchor href={item.href} target="_blank" rel="noreferrer">
+                    {item.text}
+                  </SoundAnchor>
+                )}
+              </span>
             </Reveal>
           ))}
         </ul>
