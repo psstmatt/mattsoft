@@ -2,9 +2,9 @@ export const site = {
   name: "Matt Reynolds",
 
   throughline:
-    "I turn complex, high-stakes systems into simple products — and stay hands-on until they ship.",
+    "I design trustworthy products for complex AI, platform, and operational systems — and stay hands-on until they ship.",
   status:
-    "Seattle. 15 years across Boeing, Expedia, Uber, Meta, and TikTok. Most recently GenAI product design at TikTok/ByteDance.",
+    "Staff Product Designer leading advertiser-facing GenAI work at TikTok. Previously Meta, Uber, Expedia, and Boeing.",
   contact: [
     { label: "Email", value: "mr@hey.com", href: "mailto:mr@hey.com" },
     {
@@ -28,10 +28,13 @@ export type CaseStudy = {
   problem: string[];
   scope: string[];
   decision: string[];
-  shipped: string[];
+  shipped: CaseStudyListItem[];
+  recognition?: CaseStudyListItem[];
   result: { value: string; label: string }[];
   resultNote: string;
 };
+
+export type CaseStudyListItem = string | { text: string; href: string };
 
 export const cases: CaseStudy[] = [
   {
@@ -41,7 +44,7 @@ export const cases: CaseStudy[] = [
     years: "2024 — 2026",
     proof: "Zero-to-one multimodal AI creation for advertisers and creators.",
     headlineMetric: { value: "$23", label: "cost per finished avatar spot, down from ~$300" },
-    role: "Senior Product Designer, GenAI — lead advertiser-facing designer",
+    role: "Staff Product Designer, GenAI",
     problem: [
       "Making platform-native video advertising is expensive, slow, and unfamiliar. An advertiser arrives with a product page and a budget, not a script, a face, a voice, or an edit.",
       "The underlying models could already generate scripts, avatars, voice, images, and video. None of that was a product. Capability was scattered across demos with no shared notion of intent, review, control, or recovery.",
@@ -53,15 +56,20 @@ export const cases: CaseStudy[] = [
       "Player-coach: I set the pattern language and personally designed the highest-risk interactions.",
     ],
     decision: [
-      "The pivotal call was to stop shipping a menu of models and design a single creation loop instead.",
+      "I led the shift from a menu of model demos to one guided creation loop.",
       "Every generative step had to answer the same four questions in the same place: what am I about to spend, what did I get, what can I change, and how do I get back. That turned a set of impressive demos into a workflow an advertiser could trust with a live campaign.",
-      "I also argued down an auto-magic 'one-click ad' flow. Advertisers needed to be visibly in charge of what their brand said — the control surface was the product, not the model.",
+      "I made review checkpoints and human override part of the interaction model instead of hiding them behind a one-click promise. Advertisers needed to remain visibly in charge of what their brand said; the control surface was the product, not the model.",
     ],
     shipped: [
       "Public launch of Symphony Creative Studio.",
       "Custom Avatar creation and reuse, Creative Cue ideation, script-to-video assembly, inline editing, and export to ad delivery.",
       "A reusable pattern set for generative state — pending, partial, failed, regenerated, human-edited — adopted by adjacent GenAI surfaces.",
-      "iF Design recognition for the product.",
+    ],
+    recognition: [
+      {
+        text: "iF Design recognition for TikTok Symphony AI Creative Studio.",
+        href: "https://ifdesign.com/en/winner-ranking/project/tiktok-symphony-ai-creative-studio/749032",
+      },
     ],
     result: [
       { value: "#1", label: "most-used feature in the suite (Custom Avatars)" },
@@ -80,22 +88,22 @@ export const cases: CaseStudy[] = [
     title: "Consent Platform & Design Library",
     years: "2022 — 2024",
     proof: "Reusable consent infrastructure across Facebook, Instagram, Messenger, WhatsApp.",
-    headlineMetric: { value: "32", label: "reusable components replacing per-team consent builds" },
-    role: "Product Designer — owner of the Consent Platform and its design library",
+    headlineMetric: { value: "6 wks → 4 days", label: "typical time to launch a compliant flow" },
+    role: "Staff Product Designer, Privacy",
     problem: [
       "Every team at Meta that needed a consent experience built one. Different flows, different language, different disclosure logic, four apps, dozens of regions, and a regulatory deadline attached to each.",
       "When I took ownership, implementation covered roughly half of the design specification. The platform was real, the promise was not.",
     ],
     scope: [
-      "Ownership of the consent platform surface and the component library behind it.",
+      "Ownership of the Consent Platform, Consent Simulator, and the design system behind both.",
       "Reconciliation of the design spec against what engineering had actually built.",
       "Partnership with Facebook, Instagram, Messenger, and WhatsApp product teams plus legal and policy.",
       "Documentation so the work continued without me in the room.",
     ],
     decision: [
       "The decision that mattered was auditing implementation before designing anything new.",
-      "I catalogued the gap component by component, then derived 32 reusable components from patterns already shipping rather than inventing a fresh system. Teams adopt what looks like what they already have.",
-      "I also pushed the configuration workspace — a simulator where a team could preview a consent flow per brand, surface, language, and regulation before a single line of code.",
+      "I catalogued the gap component by component, then derived 32 reusable components from validated patterns already shipping rather than inventing a fresh system. That gave product teams a familiar path onto shared infrastructure.",
+      "I defined the configuration workspace with engineering, legal, and policy partners so teams could preview a consent flow by brand, surface, language, and regulation before implementation.",
     ],
     shipped: [
       "A 32-component consent library with specification and implementation in agreement.",
@@ -104,8 +112,8 @@ export const cases: CaseStudy[] = [
       "Handoff documentation and a decision record for continued execution.",
     ],
     result: [
-      { value: "32", label: "components covering ~90% of new consent requests" },
       { value: "6 wks → 4 days", label: "typical time to stand up a compliant flow" },
+      { value: "32", label: "components covering ~90% of new consent requests" },
       { value: "4", label: "apps on shared consent infrastructure" },
       { value: "100%", label: "spec-to-implementation parity at handoff, from ~50%" },
     ],
@@ -118,10 +126,10 @@ export const cases: CaseStudy[] = [
     years: "2010 — 2016",
     proof: "Expert workflows where a mistake costs a delivery slot, not a click.",
     headlineMetric: { value: "31%", label: "faster delivery readiness reviews" },
-    role: "Designer on enterprise and aircraft operations platforms",
+    role: "Front End Developer",
     problem: [
       "Handing over an airplane is a coordination problem with hundreds of open items, several organizations, a customer on site, and a date that does not move.",
-      "The people doing it were experts working across spreadsheets, internal tools, and email — with no single view of whether the aircraft was actually ready.",
+      "The people doing it were experts working across spreadsheets, internal tools, and email, but fragmented visibility made it difficult to know whether the aircraft was actually ready.",
     ],
     scope: [
       "Delivery readiness workflows, enterprise search, and internal operations platforms.",
@@ -129,7 +137,7 @@ export const cases: CaseStudy[] = [
       "Information architecture for expert users who need density, not onboarding.",
     ],
     decision: [
-      "I resisted simplifying the interface. Experts were not confused; they were uninformed.",
+      "The work required clearer information architecture without reducing the information density experts relied on.",
       "The design brief became a single authoritative readiness view — every open item, its owner, its blocking relationship, and its effect on the date — dense on purpose and scannable in seconds.",
       "Exceptions were promoted to first-class objects instead of being buried in comments, which is where the real coordination cost lived.",
     ],
@@ -152,23 +160,23 @@ export const cases: CaseStudy[] = [
     years: "2019 — 2022",
     proof: "Scheduling and dispatch mechanics in a live two-sided marketplace.",
     headlineMetric: { value: "97%", label: "on-time pickup rate for reserved trips" },
-    role: "Product Designer across rider and driver marketplace surfaces",
+    role: "Senior Product Designer",
     problem: [
       "A ride booked days ahead is a promise made by a marketplace that does not exist yet. No driver is assigned, supply is a forecast, and the rider is making a flight.",
-      "Shared rides, hourly rides, fleets, and multi-driver dispatch each stressed the same seam between what the rider was told and what the system could guarantee.",
+      "Fleet matching and multi-driver dispatch exposed the seam between what a rider was promised and what the marketplace could guarantee. That foundation later unlocked Reserve, Hourly, Intercity, and Rentals.",
     ],
     scope: [
-      "Reserve rider and driver experience, shared rides, hourly rides, fleet match, dispatch, identity, and rewards surfaces.",
+      "Fleet Match, multi-driver dispatch, Reserve, Hourly, Intercity, Rentals, and later identity and rewards surfaces.",
       "Interaction hierarchy for time-critical moments: assignment, arrival, wait, and no-show.",
     ],
     decision: [
-      "I pushed the product to state its guarantee plainly and design for the failure of it.",
+      "I framed the experience around two linked commitments: state the pickup promise plainly and make recovery equally clear when the marketplace could not keep it.",
       "Rather than hiding marketplace uncertainty, Reserve committed to a specific window and made the recovery path — reassignment, wait time, refund — visible before it was needed.",
-      "On the driver side, I argued for scheduled trips to be shown as commitments with real earnings weight, not as another queued request.",
+      "On the driver side, I designed scheduled trips as commitments with visible timing and earnings weight, rather than treating them as another queued request.",
     ],
     shipped: [
       "Uber Reserve rider booking, driver assignment, and arrival experiences.",
-      "Shared and hourly ride flows, fleet match, and multi-driver dispatch interfaces.",
+      "Fleet Match and multi-driver dispatch foundations, followed by Hourly, Intercity, and Rentals experiences.",
       "A shared vocabulary for marketplace certainty used across scheduling surfaces.",
     ],
     result: [
@@ -178,43 +186,15 @@ export const cases: CaseStudy[] = [
     ],
     resultNote: "Program metrics from launch reporting.",
   },
-  {
-    slug: "petloop",
-    company: "Independent",
-    title: "PetLoop",
-    years: "2025 — present",
-    proof: "A private native iPhone pet-memory app, designed and built solo.",
-    headlineMetric: { value: "100%", label: "on-device — no account, no server, no telemetry" },
-    role: "Everything — product, design, SwiftUI implementation, release",
-    problem: [
-      "The photos of a pet are scattered across years of camera roll, and the good ones surface at random or not at all.",
-      "Existing pet apps want a login, a subscription, and a social graph. The moment does not need any of that.",
-    ],
-    scope: [
-      "Product definition, interaction design, SwiftUI implementation, and TestFlight release.",
-      "Local-first data model, on-device photo selection, and notification pacing.",
-    ],
-    decision: [
-      "No account, no backend. Everything lives on the device.",
-      "That single constraint removed onboarding, privacy copy, sync states, and the entire class of empty-state design that usually eats a small app — and made the first launch a single tap.",
-      "Resurfacing is paced deliberately: infrequent, never on a bad anniversary, always dismissible.",
-    ],
-    shipped: [
-      "Native SwiftUI iPhone app in private TestFlight.",
-      "On-device memory selection, timeline, and gentle resurfacing notifications.",
-    ],
-    result: [
-      { value: "1 tap", label: "from install to first memory" },
-      { value: "0", label: "network requests in normal use" },
-      { value: "68%", label: "of testers open a resurfaced memory" },
-    ],
-    resultNote: "Private TestFlight; small tester group.",
-  },
 ];
+
+const caseOrder = ["symphony", "consent", "reserve", "deliveries"];
+
+cases.sort((a, b) => caseOrder.indexOf(a.slug) - caseOrder.indexOf(b.slug));
 
 export type CatalogGroup = {
   company: string;
-  items: { title: string; note: string; years: string }[];
+  items: { title: string; note: string; years: string; slug?: string }[];
 };
 
 export const catalog: CatalogGroup[] = [
@@ -222,24 +202,25 @@ export const catalog: CatalogGroup[] = [
     company: "TikTok / ByteDance",
     items: [
       {
+        title: "AI agent surfaces",
+        note: "A Symphony program contribution: agentic creation and review patterns for advertisers.",
+        years: "2025—26",
+      },
+      {
         title: "Symphony Creative Studio",
         note: "Multimodal AI ad creation, end to end.",
         years: "2024—26",
+        slug: "symphony",
       },
       {
         title: "Custom Avatars",
-        note: "Likeness capture, licensing, and reuse in generated video.",
+        note: "A Symphony capability for likeness capture, licensing, and reuse in generated video.",
         years: "2025",
       },
       {
         title: "Creative Cue",
-        note: "Script ideation grounded in product and audience signals.",
+        note: "A Symphony capability for script ideation grounded in product and audience signals.",
         years: "2025",
-      },
-      {
-        title: "AI agent surfaces",
-        note: "Agentic creation and review patterns for advertisers.",
-        years: "2025—26",
       },
     ],
   },
@@ -250,15 +231,16 @@ export const catalog: CatalogGroup[] = [
         title: "Consent Platform",
         note: "Configuration, preview, and launch of consent flows.",
         years: "2022—24",
+        slug: "consent",
       },
       {
         title: "Consent Design Library",
-        note: "32 reusable components across four apps.",
+        note: "The reusable component system within the Consent Platform program.",
         years: "2023",
       },
       {
         title: "Consent Simulator",
-        note: "Preview by brand, surface, language, and regulation.",
+        note: "The Consent Platform workspace for preview by brand, surface, language, and regulation.",
         years: "2023",
       },
     ],
@@ -266,39 +248,57 @@ export const catalog: CatalogGroup[] = [
   {
     company: "Uber",
     items: [
-      { title: "Uber Reserve", note: "Scheduled rides for riders and drivers.", years: "2020—22" },
       {
-        title: "Multi-driver dispatch",
-        note: "Assignment and reassignment mechanics.",
-        years: "2021",
+        title: "Identity & rewards",
+        note: "Final tenure chapter: verification and loyalty surfaces.",
+        years: "Final",
+      },
+      {
+        title: "Rentals",
+        note: "Rental-car access built on the marketplace platform.",
+        years: "Later",
+      },
+      {
+        title: "Intercity",
+        note: "Longer-distance booking and marketplace expectations.",
+        years: "Later",
       },
       {
         title: "Hourly rides",
         note: "Time-based booking with an open destination.",
-        years: "2021",
+        years: "Later",
       },
-      { title: "Fleet Match", note: "Fleet supply matched to demand shape.", years: "2022" },
       {
-        title: "Shared rides",
-        note: "Multi-rider routing and expectation setting.",
-        years: "2019—20",
+        title: "Uber Reserve",
+        note: "Scheduled rides for riders and drivers.",
+        years: "Later",
+        slug: "reserve",
       },
-      { title: "Identity & rewards", note: "Verification and loyalty surfaces.", years: "2019—21" },
+      {
+        title: "Multi-driver dispatch",
+        note: "Assignment and reassignment mechanics that unlocked later booking products.",
+        years: "Second",
+      },
+      {
+        title: "Fleet Match",
+        note: "First Uber program: fleet supply matched to demand shape.",
+        years: "First",
+      },
     ],
   },
   {
     company: "Expedia",
     items: [
-      { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—19" },
-      {
-        title: "Price change experiences",
-        note: "Telling travelers what changed and what to do.",
-        years: "2018",
-      },
       {
         title: "Bots & Voice",
         note: "Managed a team of 5+ on conversational travel products.",
-        years: "2017—19",
+        years: "2016—17",
+      },
+      { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—17" },
+      {
+        title: "Price change experiences",
+        note: "Telling travelers what changed and what to do.",
+        years: "2016—17",
       },
     ],
   },
@@ -309,53 +309,35 @@ export const catalog: CatalogGroup[] = [
         title: "Aircraft deliveries",
         note: "Readiness review and handover workflows.",
         years: "2013—16",
-      },
-      {
-        title: "Enterprise search",
-        note: "Cross-system record retrieval for operations.",
-        years: "2012",
+        slug: "deliveries",
       },
       {
         title: "Internal platforms",
         note: "Expert tooling for manufacturing operations.",
         years: "2010—16",
       },
-    ],
-  },
-  {
-    company: "Independent",
-    items: [
       {
-        title: "PetLoop",
-        note: "Private native iPhone pet-memory app. TestFlight.",
-        years: "2025—",
-      },
-      {
-        title: "Electronic Mail",
-        note: "Single-user, action-oriented Gmail client. Working prototype.",
-        years: "2025—",
-      },
-      {
-        title: "Interaction experiments",
-        note: "Motion, sound, and design-tool prototypes.",
-        years: "ongoing",
+        title: "Enterprise search",
+        note: "Cross-system record retrieval for operations.",
+        years: "2012",
       },
     ],
   },
 ];
 
 export const howIWork: string[] = [
-  "I work as a player-coach. I shape the strategy, build the reusable system, critique the team's work, and personally design the interactions most likely to fail.",
-  "I stay in it through implementation. A spec that ships at half fidelity is a spec that did not ship.",
-  "I want direct customer evidence, a clearly framed decision, and an honest line between what is shipped, what is working, and what is planned.",
-  "I am hands-on in Figma and in code-assisted prototyping. If the argument is about how something feels, I would rather build it than describe it.",
+  "I work as a player-coach: shaping product strategy and reusable systems while personally designing the interactions with the most risk.",
+  "I stay close to engineering through implementation, using prototypes and working software to resolve questions that a specification cannot.",
+  "I ground decisions in direct customer evidence and keep a clear line between what shipped, what is working, and what remains a hypothesis.",
+  "I use critique to raise the quality of the whole team, then stay accountable for the details that determine whether the product earns trust.",
+];
+
+export const homeHowIWork: string[] = [
+  "I turn ambiguous capabilities into a product model the team can build: the promise, the decisions, the failure states, and the reusable patterns behind them.",
+  "Then I stay close to the work through prototype, implementation, and launch so the experience people use matches the one we intended.",
 ];
 
 export const lookingFor: string[] = [
-  "Robots and human-machine interfaces",
-  "AI and agentic systems",
-  "Platforms and trust",
-  "Physical or operational software",
-  "Marketplaces, scheduling, and commerce",
-  "Code-adjacent designer-builder roles",
+  "AI, agents, and human-machine systems where trust depends on clear control and recovery.",
+  "Operational platforms and marketplaces where software has to make a real-world promise.",
 ];

@@ -1,6 +1,6 @@
 # Mattsoft
 
-Matt Reynolds's text-first portfolio, exported from Lovable for independent local development and Vercel review deployments.
+Matt Reynolds's text-first portfolio, exported from Lovable for independent development and deployment on Vercel.
 
 ## Source provenance
 
@@ -24,8 +24,18 @@ bun run dev
 Available checks:
 
 ```bash
+bun run typecheck
 bun run lint
 bun run build
+bun run check
 ```
 
-The repository is configured as a noindex review build. Production promotion, aliases, domains, and DNS are intentionally out of scope.
+## Production safety
+
+- Only the seven canonical HTML routes on `https://psstmatt.com` are indexable.
+- Preview and generated `vercel.app` hosts, unknown routes, and server errors remain `noindex, nofollow`.
+- Canonical links, Open Graph URLs, `robots.txt`, and `sitemap.xml` all resolve to the apex domain.
+- Vercel Web Analytics and Speed Insights are present, but their `beforeSend` guards allow telemetry only when the page URL is on the exact `psstmatt.com` host.
+- Legacy hash URLs from the previous portfolio resolve to the closest surviving case study or catalog entry.
+
+The Vercel Production artifact can be staged without assigning a domain. Moving `psstmatt.com`, changing aliases, and changing DNS remain a separate, explicit cutover step.

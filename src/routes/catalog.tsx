@@ -1,37 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { cases, catalog } from "@/content/site";
+import { catalog } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
     meta: [
       { title: "Work catalog — Matt Reynolds" },
+      canonicalRobotsMeta(),
       {
         name: "description",
         content:
-          "Everything worth listing: TikTok Symphony, Meta consent infrastructure, Uber Reserve and dispatch, Expedia Trips and Bots & Voice, Boeing operations, and independent products.",
+          "Everything worth listing: TikTok Symphony, Meta consent infrastructure, Uber Reserve and dispatch, Expedia Trips and Bots & Voice, and Boeing operations.",
       },
       { property: "og:title", content: "Work catalog — Matt Reynolds" },
+      { property: "og:url", content: canonicalUrl("/catalog") },
       {
         property: "og:description",
-        content:
-          "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, Boeing, and independent products.",
+        content: "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, and Boeing.",
       },
       { name: "twitter:title", content: "Work catalog — Matt Reynolds" },
       {
         name: "twitter:description",
-        content:
-          "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, Boeing, and independent products.",
+        content: "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, and Boeing.",
       },
     ],
+    links: [canonicalLink("/catalog")],
   }),
   component: CatalogPage,
 });
 
 function CatalogPage() {
-  const caseBySlugTitle = new Map(cases.map((c) => [c.title, c.slug]));
-
   return (
     <div className="mx-auto w-full max-w-[68ch] px-6">
       <Reveal>
@@ -41,7 +42,8 @@ function CatalogPage() {
       </Reveal>
       <Reveal delay={0.08}>
         <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-muted-foreground">
-          Everything worth listing, grouped by where it happened. The five with a link go deeper.
+          Fifteen years of work in reverse chronological order within each company. Linked projects
+          are full case studies; the remaining entries show related contributions and programs.
         </p>
       </Reveal>
 
@@ -54,13 +56,16 @@ function CatalogPage() {
           </Reveal>
           <ul className="mt-5">
             {group.items.map((item, i) => {
-              const slug = caseBySlugTitle.get(item.title);
               return (
                 <Reveal as="li" key={item.title} delay={i * 0.03} className="rule-row py-4">
                   <div className="flex items-baseline justify-between gap-6">
                     <span className="text-[16px] leading-snug">
-                      {slug ? (
-                        <SoundLink to="/work/$slug" params={{ slug }}>
+                      {item.slug ? (
+                        <SoundLink
+                          to="/work/$slug"
+                          params={{ slug: item.slug }}
+                          className="catalog-case-link"
+                        >
                           {item.title}
                         </SoundLink>
                       ) : (

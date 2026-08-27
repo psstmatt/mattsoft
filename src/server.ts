@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { CANONICAL_HOST, isCanonicalPath } from "./lib/site-metadata";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -44,18 +45,43 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function applyRobotsPolicy(request: Request, response: Response): Response {
+  const headers = new Headers(response.headers);
+  const url = new URL(request.url);
+  const hostname = url.hostname.toLowerCase();
+  const contentType = headers.get("content-type") ?? "";
+  const isCanonicalPage =
+    hostname === CANONICAL_HOST &&
+    isCanonicalPath(url.pathname) &&
+    response.status >= 200 &&
+    response.status < 300 &&
+    contentType.includes("text/html");
+
+  headers.set("X-Robots-Tag", isCanonicalPage ? "index, follow" : "noindex, nofollow");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalizedResponse = await normalizeCatastrophicSsrResponse(response);
+      return applyRobotsPolicy(request, normalizedResponse);
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return applyRobotsPolicy(
+        request,
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };

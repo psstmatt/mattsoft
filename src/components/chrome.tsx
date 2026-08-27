@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { Moon, Sun } from "lucide-react";
 import { site } from "@/content/site";
 import { useSound } from "@/lib/sound";
 import { SoundAnchor, SoundLink } from "./sound-link";
@@ -15,11 +17,13 @@ function useTheme() {
     const isDark = stored ? stored === "dark" : true;
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
   }, []);
   const toggle = () => {
     setDark((prev) => {
       const next = !prev;
       document.documentElement.classList.toggle("dark", next);
+      document.documentElement.style.colorScheme = next ? "dark" : "light";
       try {
         window.localStorage.setItem("psstmatt.theme", next ? "dark" : "light");
       } catch {
@@ -32,25 +36,36 @@ function useTheme() {
 }
 
 const controlClass =
-  "font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:text-foreground";
+  "inline-flex min-h-11 min-w-11 items-center justify-center px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-150 hover:text-foreground";
 
 export function Header() {
   const { play } = useSound();
   const { dark, toggle: toggleTheme } = useTheme();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const themeLabel = dark ? "Switch to light mode" : "Switch to dark mode";
+  const workActive = pathname === "/catalog" || pathname.startsWith("/work/");
 
   return (
-    <header className="mx-auto flex w-full max-w-[68ch] items-baseline justify-between px-6 pt-10 pb-14 sm:pt-14">
+    <header className="mx-auto flex w-full max-w-[68ch] items-center justify-between px-6 pt-8 pb-12 sm:pt-12 sm:pb-14">
       <SoundLink
         to="/"
-        className="font-mono text-[11px] uppercase tracking-[0.18em] no-underline text-foreground"
+        className="inline-flex min-h-11 items-center font-mono text-[11px] uppercase tracking-[0.18em] no-underline text-foreground"
       >
         Matt Reynolds
       </SoundLink>
-      <nav className="flex items-baseline gap-5">
-        <SoundLink to="/catalog" className={`${controlClass} no-underline`}>
+      <nav className="flex items-center gap-2" aria-label="Primary navigation">
+        <SoundLink
+          to="/catalog"
+          className={`${controlClass} no-underline ${workActive ? "text-foreground underline decoration-[0.5px] underline-offset-[5px]" : ""}`}
+          aria-current={workActive ? "page" : undefined}
+        >
           Work
         </SoundLink>
-        <SoundLink to="/about" className={`${controlClass} no-underline`}>
+        <SoundLink
+          to="/about"
+          className={`${controlClass} no-underline ${pathname === "/about" ? "text-foreground underline decoration-[0.5px] underline-offset-[5px]" : ""}`}
+          aria-current={pathname === "/about" ? "page" : undefined}
+        >
           About
         </SoundLink>
         <button
@@ -60,10 +75,15 @@ export function Header() {
             toggleTheme();
           }}
           onMouseEnter={() => play("hover")}
-          className={controlClass}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          className={`${controlClass} p-0 align-middle`}
+          aria-label={themeLabel}
+          title={themeLabel}
         >
-          {dark ? "Light" : "Dark"}
+          {dark ? (
+            <Sun className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+          ) : (
+            <Moon className="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+          )}
         </button>
       </nav>
     </header>
@@ -83,7 +103,11 @@ export function Footer() {
               <span className="w-24 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 {c.label}
               </span>
-              <SoundAnchor href={c.href} target="_blank" rel="noreferrer">
+              <SoundAnchor
+                href={c.href}
+                target={c.href.startsWith("mailto:") ? undefined : "_blank"}
+                rel={c.href.startsWith("mailto:") ? undefined : "noreferrer"}
+              >
                 {c.value}
               </SoundAnchor>
             </li>

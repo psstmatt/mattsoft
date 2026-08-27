@@ -1,30 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { cases, howIWork, site } from "@/content/site";
+import { cases, homeHowIWork, site } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Matt Reynolds — Product & Software Designer" },
+      canonicalRobotsMeta(),
       {
         name: "description",
         content:
-          "I turn complex, high-stakes systems into simple products — and stay hands-on until they ship. GenAI at TikTok, consent at Meta, marketplaces at Uber, operations at Boeing.",
+          "Staff product designer creating trustworthy products for complex AI, platform, marketplace, and operational systems.",
       },
       { property: "og:title", content: "Matt Reynolds — Product & Software Designer" },
+      { property: "og:url", content: canonicalUrl("/") },
       {
         property: "og:description",
         content:
-          "Fifteen years turning complex systems into products people can trust. Selected work from TikTok, Meta, Uber, Expedia, and Boeing.",
+          "Staff-level product design across GenAI at TikTok, consent at Meta, marketplaces at Uber, travel at Expedia, and operations at Boeing.",
       },
       { name: "twitter:title", content: "Matt Reynolds — Product & Software Designer" },
       {
         name: "twitter:description",
         content:
-          "Fifteen years turning complex systems into products people can trust. Selected work from TikTok, Meta, Uber, Expedia, and Boeing.",
+          "Staff-level product design across GenAI at TikTok, consent at Meta, marketplaces at Uber, travel at Expedia, and operations at Boeing.",
       },
     ],
+    links: [canonicalLink("/")],
   }),
   component: Index,
 });
@@ -77,7 +82,7 @@ function Index() {
                 <p className="mt-3 pl-[calc(1.5rem+1ch)] text-[15px] leading-relaxed text-muted-foreground">
                   {c.proof}
                 </p>
-                <p className="mt-2 max-h-0 overflow-hidden pl-[calc(1.5rem+1ch)] font-mono text-[12px] text-muted-foreground opacity-0 transition-all duration-500 ease-out group-hover:max-h-16 group-hover:opacity-100 group-focus-visible:max-h-16 group-focus-visible:opacity-100">
+                <p className="metric-detail mt-2 overflow-hidden pl-[calc(1.5rem+1ch)] font-mono text-[12px] text-muted-foreground">
                   {c.headlineMetric.value} — {c.headlineMetric.label}
                 </p>
               </SoundLink>
@@ -102,7 +107,7 @@ function Index() {
           </h2>
         </Reveal>
         <div className="mt-8 space-y-5 text-[17px] leading-[1.65]">
-          {howIWork.map((p, i) => (
+          {homeHowIWork.map((p, i) => (
             <Reveal as="p" key={i} delay={i * 0.05}>
               {p}
             </Reveal>

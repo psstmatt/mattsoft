@@ -29,7 +29,7 @@ export function CountUp({ value, className }: { value: string; className?: strin
         if (!entries[0]?.isIntersecting) return;
         observer.disconnect();
         const start = performance.now();
-        const duration = 900;
+        const duration = 600;
         const tick = (now: number) => {
           const t = Math.min(1, (now - start) / duration);
           const eased = 1 - Math.pow(1 - t, 3);
@@ -49,7 +49,8 @@ export function CountUp({ value, className }: { value: string; className?: strin
 
   return (
     <span ref={ref} className={className}>
-      {shouldAnimate ? display : value}
+      <span className="sr-only">{value}</span>
+      <span aria-hidden="true">{shouldAnimate ? display : value}</span>
     </span>
   );
 }

@@ -9,11 +9,18 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { SoundProvider } from "../lib/sound";
 import { Header, Footer } from "../components/chrome";
+import { LEGACY_HASH_SCRIPT } from "../lib/legacy-hashes";
+import { canonicalUrl } from "../lib/site-metadata";
+import { allowCanonicalTelemetry } from "../lib/telemetry";
+
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('psstmatt.theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
 
 function NotFoundComponent() {
   return (
@@ -64,17 +71,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Matt Reynolds turns complex, high-stakes systems into simple products. GenAI at TikTok, consent at Meta, marketplaces at Uber, operations at Boeing.",
+          "Matt Reynolds is a staff product designer creating trustworthy products for complex AI, platform, marketplace, and operational systems.",
       },
       { name: "author", content: "Matt Reynolds" },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/og-image.png" },
+      { property: "og:image", content: canonicalUrl("/og-image.png") },
       { property: "og:image:width", content: "1920" },
       { property: "og:image:height", content: "1080" },
       { property: "og:image:alt", content: "Matt Reynolds — Product & Software Designer" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "/og-image.png" },
+      { name: "twitter:image", content: canonicalUrl("/og-image.png") },
       { name: "twitter:image:alt", content: "Matt Reynolds — Product & Software Designer" },
     ],
     links: [
@@ -90,12 +97,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
         {children}
+        <Analytics beforeSend={allowCanonicalTelemetry} />
+        <SpeedInsights beforeSend={allowCanonicalTelemetry} />
         <Scripts />
       </body>
     </html>
@@ -113,9 +124,8 @@ function PageTransition({ children }: { children: ReactNode }) {
       <motion.main
         key={pathname}
         initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.16, ease: "easeOut" } }}
+        exit={{ opacity: 0, y: -4, transition: { duration: 0.09, ease: "easeIn" } }}
       >
         {children}
       </motion.main>
