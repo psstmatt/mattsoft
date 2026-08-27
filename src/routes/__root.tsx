@@ -117,15 +117,21 @@ function PageTransition({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  if (reduced) return <>{children}</>;
-
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.main
         key={pathname}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.16, ease: "easeOut" } }}
-        exit={{ opacity: 0, y: -4, transition: { duration: 0.09, ease: "easeIn" } }}
+        initial={reduced ? false : { opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          transition: reduced ? { duration: 0 } : { duration: 0.16, ease: "easeOut" },
+        }}
+        exit={
+          reduced
+            ? { opacity: 1, y: 0, transition: { duration: 0 } }
+            : { opacity: 0, y: -4, transition: { duration: 0.09, ease: "easeIn" } }
+        }
       >
         {children}
       </motion.main>
