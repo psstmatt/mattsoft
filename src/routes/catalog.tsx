@@ -37,7 +37,8 @@ function CatalogPage() {
       </Reveal>
       <Reveal delay={0.08}>
         <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-muted-foreground">
-          Everything worth listing, grouped by where it happened. The four with a link go deeper.
+          Fifteen years of work in reverse chronological order within each company. Linked projects
+          are full case studies; the remaining entries show related contributions and programs.
         </p>
       </Reveal>
 
@@ -55,7 +56,11 @@ function CatalogPage() {
                   <div className="flex items-baseline justify-between gap-6">
                     <span className="text-[16px] leading-snug">
                       {item.slug ? (
-                        <SoundLink to="/work/$slug" params={{ slug: item.slug }}>
+                        <SoundLink
+                          to="/work/$slug"
+                          params={{ slug: item.slug }}
+                          className="catalog-case-link"
+                        >
                           {item.title}
                         </SoundLink>
                       ) : (

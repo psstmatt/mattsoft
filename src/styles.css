@@ -193,6 +193,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  :where(a, button):focus-visible {
+    outline: 2px solid var(--color-foreground);
+    outline-offset: 4px;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -209,12 +214,52 @@
 
 @utility rule-row {
   border-top: 1px solid var(--color-border);
-  transition:
-    background-color 300ms ease,
-    padding-left 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 150ms ease;
 
-  &:hover {
-    padding-left: 0.6rem;
+  &:hover,
+  &:focus-within {
     background-color: color-mix(in oklab, var(--color-foreground) 4%, transparent);
+  }
+}
+
+.metric-detail {
+  max-height: 4rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 160ms ease;
+}
+
+.group:hover .metric-detail,
+.group:focus-visible .metric-detail {
+  opacity: 1;
+  visibility: visible;
+}
+
+.result-primary dt {
+  font-weight: 500;
+}
+
+.catalog-case-link::after {
+  content: " \2192";
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  text-decoration: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .metric-detail {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

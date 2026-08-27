@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { howIWork, lookingFor } from "@/content/site";
 import { Reveal } from "@/components/reveal";
-import { SoundLink } from "@/components/sound-link";
+import { SoundAnchor, SoundLink } from "@/components/sound-link";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -73,9 +73,9 @@ function AboutPage() {
         </Reveal>
         <Reveal delay={0.05}>
           <p className="mt-6 max-w-[52ch] text-[17px] leading-[1.65]">
-            Staff or principal individual-contributor work with real design decision rights, close
-            product and engineering partnership, direct customer access, and a credible path from
-            greenfield ambiguity to launch.
+            I am looking for staff or principal product design work where I can own consequential
+            decisions, work closely with product and engineering, learn directly from customers, and
+            carry an ambitious idea from ambiguity through launch.
           </p>
         </Reveal>
         <ul className="mt-6">
@@ -98,12 +98,15 @@ function AboutPage() {
         </Reveal>
         <Reveal delay={0.05}>
           <p className="mt-6 text-[15px] leading-relaxed text-muted-foreground">
-            The fastest way to reach me is email. Everything else is in the footer, including a
-            calendar link if you'd rather just talk.
+            The fastest way to reach me is email, or you can book time directly.
           </p>
         </Reveal>
         <Reveal delay={0.1}>
-          <p className="mt-6 text-[15px]">
+          <p className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-[15px]">
+            <SoundAnchor href="mailto:mr@hey.com">Email me →</SoundAnchor>
+            <SoundAnchor href="https://cal.com/psstmatt" target="_blank" rel="noreferrer">
+              Book time →
+            </SoundAnchor>
             <SoundLink to="/catalog">See the full work catalog →</SoundLink>
           </p>
         </Reveal>

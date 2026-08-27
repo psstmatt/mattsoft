@@ -32,7 +32,7 @@ export const Route = createFileRoute("/work/$slug")({
   component: CasePage,
   notFoundComponent: () => (
     <div className="mx-auto w-full max-w-[68ch] px-6 py-16">
-      <p className="text-2xl">No case study at that address.</p>
+      <h1 className="text-2xl">No case study at that address.</h1>
       <p className="mt-6 text-[15px]">
         <SoundLink to="/catalog">See the full catalog →</SoundLink>
       </p>
@@ -117,15 +117,19 @@ function CasePage() {
         </p>
       </Reveal>
       <Reveal delay={0.18}>
-        <p className="mt-6 border-t border-border pt-5 font-mono text-[12px] uppercase tracking-[0.14em] text-muted-foreground">
-          Role — {study.role}
-        </p>
+        <dl className="mt-6 grid gap-2 border-t border-border pt-5 sm:grid-cols-[5rem_1fr]">
+          <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            Role
+          </dt>
+          <dd className="text-[15px] leading-relaxed text-muted-foreground">{study.role}</dd>
+        </dl>
       </Reveal>
 
       <Section label="Problem" paragraphs={study.problem} />
       <Section label="My scope" list={study.scope} />
       <Section label="The decision" paragraphs={study.decision} />
       <Section label="What shipped" list={study.shipped} />
+      {study.recognition && <Section label="Recognition" list={study.recognition} />}
 
       <section className="mt-20">
         <Reveal>
@@ -135,7 +139,13 @@ function CasePage() {
         </Reveal>
         <dl className="mt-6">
           {study.result.map((r, i) => (
-            <Reveal as="div" key={i} delay={i * 0.05} className="rule-row flex gap-6 py-5" sound>
+            <Reveal
+              as="div"
+              key={i}
+              delay={i * 0.05}
+              className={`rule-row flex gap-6 py-5 ${i === 0 ? "result-primary" : ""}`}
+              sound
+            >
               <dt className="w-28 shrink-0 font-mono text-[1.6rem] leading-tight tabular-nums">
                 <CountUp value={r.value} />
               </dt>

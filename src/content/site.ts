@@ -2,9 +2,9 @@ export const site = {
   name: "Matt Reynolds",
 
   throughline:
-    "I turn complex, high-stakes systems into simple products — and stay hands-on until they ship.",
+    "I design trustworthy products for complex AI, platform, and operational systems — and stay hands-on until they ship.",
   status:
-    "Seattle. Staff Product Designer at TikTok. 15 years across Boeing, Expedia, Uber, Meta, and TikTok.",
+    "Staff Product Designer leading advertiser-facing GenAI work at TikTok. Previously Meta, Uber, Expedia, and Boeing.",
   contact: [
     { label: "Email", value: "mr@hey.com", href: "mailto:mr@hey.com" },
     {
@@ -29,6 +29,7 @@ export type CaseStudy = {
   scope: string[];
   decision: string[];
   shipped: CaseStudyListItem[];
+  recognition?: CaseStudyListItem[];
   result: { value: string; label: string }[];
   resultNote: string;
 };
@@ -55,14 +56,16 @@ export const cases: CaseStudy[] = [
       "Player-coach: I set the pattern language and personally designed the highest-risk interactions.",
     ],
     decision: [
-      "The pivotal call was to stop shipping a menu of models and design a single creation loop instead.",
+      "I led the shift from a menu of model demos to one guided creation loop.",
       "Every generative step had to answer the same four questions in the same place: what am I about to spend, what did I get, what can I change, and how do I get back. That turned a set of impressive demos into a workflow an advertiser could trust with a live campaign.",
-      "I also argued down an auto-magic 'one-click ad' flow. Advertisers needed to be visibly in charge of what their brand said — the control surface was the product, not the model.",
+      "I made review checkpoints and human override part of the interaction model instead of hiding them behind a one-click promise. Advertisers needed to remain visibly in charge of what their brand said; the control surface was the product, not the model.",
     ],
     shipped: [
       "Public launch of Symphony Creative Studio.",
       "Custom Avatar creation and reuse, Creative Cue ideation, script-to-video assembly, inline editing, and export to ad delivery.",
       "A reusable pattern set for generative state — pending, partial, failed, regenerated, human-edited — adopted by adjacent GenAI surfaces.",
+    ],
+    recognition: [
       {
         text: "iF Design recognition for TikTok Symphony AI Creative Studio.",
         href: "https://ifdesign.com/en/winner-ranking/project/tiktok-symphony-ai-creative-studio/749032",
@@ -85,7 +88,7 @@ export const cases: CaseStudy[] = [
     title: "Consent Platform & Design Library",
     years: "2022 — 2024",
     proof: "Reusable consent infrastructure across Facebook, Instagram, Messenger, WhatsApp.",
-    headlineMetric: { value: "32", label: "reusable components replacing per-team consent builds" },
+    headlineMetric: { value: "6 wks → 4 days", label: "typical time to launch a compliant flow" },
     role: "Product Designer — owner of the Consent Platform and its design library",
     problem: [
       "Every team at Meta that needed a consent experience built one. Different flows, different language, different disclosure logic, four apps, dozens of regions, and a regulatory deadline attached to each.",
@@ -99,8 +102,8 @@ export const cases: CaseStudy[] = [
     ],
     decision: [
       "The decision that mattered was auditing implementation before designing anything new.",
-      "I catalogued the gap component by component, then derived 32 reusable components from patterns already shipping rather than inventing a fresh system. Teams adopt what looks like what they already have.",
-      "I also pushed the configuration workspace — a simulator where a team could preview a consent flow per brand, surface, language, and regulation before a single line of code.",
+      "I catalogued the gap component by component, then derived 32 reusable components from validated patterns already shipping rather than inventing a fresh system. That gave product teams a familiar path onto shared infrastructure.",
+      "I defined the configuration workspace with engineering, legal, and policy partners so teams could preview a consent flow by brand, surface, language, and regulation before implementation.",
     ],
     shipped: [
       "A 32-component consent library with specification and implementation in agreement.",
@@ -109,8 +112,8 @@ export const cases: CaseStudy[] = [
       "Handoff documentation and a decision record for continued execution.",
     ],
     result: [
-      { value: "32", label: "components covering ~90% of new consent requests" },
       { value: "6 wks → 4 days", label: "typical time to stand up a compliant flow" },
+      { value: "32", label: "components covering ~90% of new consent requests" },
       { value: "4", label: "apps on shared consent infrastructure" },
       { value: "100%", label: "spec-to-implementation parity at handoff, from ~50%" },
     ],
@@ -123,10 +126,10 @@ export const cases: CaseStudy[] = [
     years: "2010 — 2016",
     proof: "Expert workflows where a mistake costs a delivery slot, not a click.",
     headlineMetric: { value: "31%", label: "faster delivery readiness reviews" },
-    role: "Designer on enterprise and aircraft operations platforms",
+    role: "Product and interaction designer — delivery readiness, enterprise search, and operations workflows",
     problem: [
       "Handing over an airplane is a coordination problem with hundreds of open items, several organizations, a customer on site, and a date that does not move.",
-      "The people doing it were experts working across spreadsheets, internal tools, and email — with no single view of whether the aircraft was actually ready.",
+      "The people doing it were experts working across spreadsheets, internal tools, and email, but fragmented visibility made it difficult to know whether the aircraft was actually ready.",
     ],
     scope: [
       "Delivery readiness workflows, enterprise search, and internal operations platforms.",
@@ -134,7 +137,7 @@ export const cases: CaseStudy[] = [
       "Information architecture for expert users who need density, not onboarding.",
     ],
     decision: [
-      "I resisted simplifying the interface. Experts were not confused; they were uninformed.",
+      "The work required clearer information architecture without reducing the information density experts relied on.",
       "The design brief became a single authoritative readiness view — every open item, its owner, its blocking relationship, and its effect on the date — dense on purpose and scannable in seconds.",
       "Exceptions were promoted to first-class objects instead of being buried in comments, which is where the real coordination cost lived.",
     ],
@@ -157,7 +160,7 @@ export const cases: CaseStudy[] = [
     years: "2019 — 2022",
     proof: "Scheduling and dispatch mechanics in a live two-sided marketplace.",
     headlineMetric: { value: "97%", label: "on-time pickup rate for reserved trips" },
-    role: "Product Designer across rider and driver marketplace surfaces",
+    role: "Product Designer — rider, driver, dispatch, and scheduling interactions",
     problem: [
       "A ride booked days ahead is a promise made by a marketplace that does not exist yet. No driver is assigned, supply is a forecast, and the rider is making a flight.",
       "Shared rides, hourly rides, fleets, and multi-driver dispatch each stressed the same seam between what the rider was told and what the system could guarantee.",
@@ -167,9 +170,9 @@ export const cases: CaseStudy[] = [
       "Interaction hierarchy for time-critical moments: assignment, arrival, wait, and no-show.",
     ],
     decision: [
-      "I pushed the product to state its guarantee plainly and design for the failure of it.",
+      "I framed the experience around two linked commitments: state the pickup promise plainly and make recovery equally clear when the marketplace could not keep it.",
       "Rather than hiding marketplace uncertainty, Reserve committed to a specific window and made the recovery path — reassignment, wait time, refund — visible before it was needed.",
-      "On the driver side, I argued for scheduled trips to be shown as commitments with real earnings weight, not as another queued request.",
+      "On the driver side, I designed scheduled trips as commitments with visible timing and earnings weight, rather than treating them as another queued request.",
     ],
     shipped: [
       "Uber Reserve rider booking, driver assignment, and arrival experiences.",
@@ -200,7 +203,7 @@ export const catalog: CatalogGroup[] = [
     items: [
       {
         title: "AI agent surfaces",
-        note: "Agentic creation and review patterns for advertisers.",
+        note: "A Symphony program contribution: agentic creation and review patterns for advertisers.",
         years: "2025—26",
       },
       {
@@ -211,12 +214,12 @@ export const catalog: CatalogGroup[] = [
       },
       {
         title: "Custom Avatars",
-        note: "Likeness capture, licensing, and reuse in generated video.",
+        note: "A Symphony capability for likeness capture, licensing, and reuse in generated video.",
         years: "2025",
       },
       {
         title: "Creative Cue",
-        note: "Script ideation grounded in product and audience signals.",
+        note: "A Symphony capability for script ideation grounded in product and audience signals.",
         years: "2025",
       },
     ],
@@ -232,12 +235,12 @@ export const catalog: CatalogGroup[] = [
       },
       {
         title: "Consent Design Library",
-        note: "32 reusable components across four apps.",
+        note: "The reusable component system within the Consent Platform program.",
         years: "2023",
       },
       {
         title: "Consent Simulator",
-        note: "Preview by brand, surface, language, and regulation.",
+        note: "The Consent Platform workspace for preview by brand, surface, language, and regulation.",
         years: "2023",
       },
     ],
@@ -314,17 +317,18 @@ export const catalog: CatalogGroup[] = [
 ];
 
 export const howIWork: string[] = [
-  "I work as a player-coach. I shape the strategy, build the reusable system, critique the team's work, and personally design the interactions most likely to fail.",
-  "I stay in it through implementation. A spec that ships at half fidelity is a spec that did not ship.",
-  "I want direct customer evidence, a clearly framed decision, and an honest line between what is shipped, what is working, and what is planned.",
-  "I am hands-on in Figma and in code-assisted prototyping. If the argument is about how something feels, I would rather build it than describe it.",
+  "I work as a player-coach: shaping product strategy and reusable systems while personally designing the interactions with the most risk.",
+  "I stay close to engineering through implementation, using prototypes and working software to resolve questions that a specification cannot.",
+  "I ground decisions in direct customer evidence and keep a clear line between what shipped, what is working, and what remains a hypothesis.",
+  "I use critique to raise the quality of the whole team, then stay accountable for the details that determine whether the product earns trust.",
+];
+
+export const homeHowIWork: string[] = [
+  "I turn ambiguous capabilities into a product model the team can build: the promise, the decisions, the failure states, and the reusable patterns behind them.",
+  "Then I stay close to the work through prototype, implementation, and launch so the experience people use matches the one we intended.",
 ];
 
 export const lookingFor: string[] = [
-  "Robots and human-machine interfaces",
-  "AI and agentic systems",
-  "Platforms and trust",
-  "Physical or operational software",
-  "Marketplaces, scheduling, and commerce",
-  "Code-adjacent designer-builder roles",
+  "AI, agents, and human-machine systems where trust depends on clear control and recovery.",
+  "Operational platforms and marketplaces where software has to make a real-world promise.",
 ];

@@ -15,6 +15,8 @@ import appCss from "../styles.css?url";
 import { SoundProvider } from "../lib/sound";
 import { Header, Footer } from "../components/chrome";
 
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('psstmatt.theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
+
 function NotFoundComponent() {
   return (
     <div className="mx-auto w-full max-w-[68ch] px-6 py-24">
@@ -64,7 +66,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Matt Reynolds turns complex, high-stakes systems into simple products. GenAI at TikTok, consent at Meta, marketplaces at Uber, operations at Boeing.",
+          "Matt Reynolds is a staff product designer creating trustworthy products for complex AI, platform, marketplace, and operational systems.",
       },
       { name: "author", content: "Matt Reynolds" },
       { name: "robots", content: "noindex, nofollow" },
@@ -90,8 +92,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -113,9 +116,8 @@ function PageTransition({ children }: { children: ReactNode }) {
       <motion.main
         key={pathname}
         initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.16, ease: "easeOut" } }}
+        exit={{ opacity: 0, y: -4, transition: { duration: 0.09, ease: "easeIn" } }}
       >
         {children}
       </motion.main>
