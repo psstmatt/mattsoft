@@ -39,7 +39,7 @@ Results:
 | Route                      | Status | Title                                                                | Content contract                                |
 | -------------------------- | -----: | -------------------------------------------------------------------- | ----------------------------------------------- |
 | `/`                        |    200 | Matt Reynolds — Product & Software Designer                          | Four selected projects; How I work              |
-| `/about`                   |    200 | About — Matt Reynolds                                                | How I work; What I want next; Elsewhere         |
+| `/about`                   |    200 | About — Matt Reynolds                                                | How I work; What I want next                    |
 | `/catalog`                 |    200 | Work catalog — Matt Reynolds                                         | TikTok, Meta, Uber, Expedia, Boeing             |
 | `/work/symphony`           |    200 | Symphony Creative Studio — TikTok / ByteDance — Matt Reynolds        | Case study plus separate recognition            |
 | `/work/consent`            |    200 | Consent Platform & Design Library — Meta — Matt Reynolds             | Five case-study sections                        |
@@ -67,10 +67,12 @@ Results:
 ## Hiring-panel content review
 
 - The homepage now leads with staff-level AI, platform, and operational-systems positioning plus Matt's current advertiser-facing GenAI mandate at TikTok.
+- Case-study titles are Staff Product Designer, GenAI at TikTok; Staff Product Designer, Privacy at Meta; Senior Product Designer at Uber; and Front End Developer at Boeing. Meta's scope records ownership of the Consent Platform, Consent Simulator, and their design system.
 - Case-study structure and length remain intact. Decision language now distinguishes individual design work, cross-functional partnership, and broader program outcomes without changing any result value.
 - Consent consistently treats `6 wks → 4 days` as its primary outcome while retaining all four original metrics.
 - Catalog entries remain reverse chronological within each company. Symphony and Consent sub-work is explicitly labeled as program contributions or capabilities rather than independent projects.
 - Homepage and About use complementary descriptions of the working model, and “What I want next” is focused on two hiring-relevant problem spaces.
+- The About page ends with the catalog link; the redundant Elsewhere section is removed while contact links remain in the global footer.
 - Independent content, new media, new routes, and unsupported evidence were not introduced.
 
 ## Assets and platform exclusions

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { howIWork, lookingFor } from "@/content/site";
 import { Reveal } from "@/components/reveal";
-import { SoundAnchor, SoundLink } from "@/components/sound-link";
+import { SoundLink } from "@/components/sound-link";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -90,27 +90,11 @@ function AboutPage() {
         </ul>
       </section>
 
-      <section className="mt-20">
-        <Reveal>
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Elsewhere
-          </h2>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <p className="mt-6 text-[15px] leading-relaxed text-muted-foreground">
-            The fastest way to reach me is email, or you can book time directly.
-          </p>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <p className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-[15px]">
-            <SoundAnchor href="mailto:mr@hey.com">Email me →</SoundAnchor>
-            <SoundAnchor href="https://cal.com/psstmatt" target="_blank" rel="noreferrer">
-              Book time →
-            </SoundAnchor>
-            <SoundLink to="/catalog">See the full work catalog →</SoundLink>
-          </p>
-        </Reveal>
-      </section>
+      <Reveal delay={0.1}>
+        <p className="mt-20 text-[15px]">
+          <SoundLink to="/catalog">See the full work catalog →</SoundLink>
+        </p>
+      </Reveal>
     </div>
   );
 }

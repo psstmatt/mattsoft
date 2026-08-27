@@ -44,7 +44,7 @@ export const cases: CaseStudy[] = [
     years: "2024 — 2026",
     proof: "Zero-to-one multimodal AI creation for advertisers and creators.",
     headlineMetric: { value: "$23", label: "cost per finished avatar spot, down from ~$300" },
-    role: "Staff Product Designer, GenAI — lead advertiser-facing designer",
+    role: "Staff Product Designer, GenAI",
     problem: [
       "Making platform-native video advertising is expensive, slow, and unfamiliar. An advertiser arrives with a product page and a budget, not a script, a face, a voice, or an edit.",
       "The underlying models could already generate scripts, avatars, voice, images, and video. None of that was a product. Capability was scattered across demos with no shared notion of intent, review, control, or recovery.",
@@ -89,13 +89,13 @@ export const cases: CaseStudy[] = [
     years: "2022 — 2024",
     proof: "Reusable consent infrastructure across Facebook, Instagram, Messenger, WhatsApp.",
     headlineMetric: { value: "6 wks → 4 days", label: "typical time to launch a compliant flow" },
-    role: "Product Designer — owner of the Consent Platform and its design library",
+    role: "Staff Product Designer, Privacy",
     problem: [
       "Every team at Meta that needed a consent experience built one. Different flows, different language, different disclosure logic, four apps, dozens of regions, and a regulatory deadline attached to each.",
       "When I took ownership, implementation covered roughly half of the design specification. The platform was real, the promise was not.",
     ],
     scope: [
-      "Ownership of the consent platform surface and the component library behind it.",
+      "Ownership of the Consent Platform, Consent Simulator, and the design system behind both.",
       "Reconciliation of the design spec against what engineering had actually built.",
       "Partnership with Facebook, Instagram, Messenger, and WhatsApp product teams plus legal and policy.",
       "Documentation so the work continued without me in the room.",
@@ -126,7 +126,7 @@ export const cases: CaseStudy[] = [
     years: "2010 — 2016",
     proof: "Expert workflows where a mistake costs a delivery slot, not a click.",
     headlineMetric: { value: "31%", label: "faster delivery readiness reviews" },
-    role: "Product and interaction designer — delivery readiness, enterprise search, and operations workflows",
+    role: "Front End Developer",
     problem: [
       "Handing over an airplane is a coordination problem with hundreds of open items, several organizations, a customer on site, and a date that does not move.",
       "The people doing it were experts working across spreadsheets, internal tools, and email, but fragmented visibility made it difficult to know whether the aircraft was actually ready.",
@@ -160,7 +160,7 @@ export const cases: CaseStudy[] = [
     years: "2019 — 2022",
     proof: "Scheduling and dispatch mechanics in a live two-sided marketplace.",
     headlineMetric: { value: "97%", label: "on-time pickup rate for reserved trips" },
-    role: "Product Designer — rider, driver, dispatch, and scheduling interactions",
+    role: "Senior Product Designer",
     problem: [
       "A ride booked days ahead is a promise made by a marketplace that does not exist yet. No driver is assigned, supply is a forecast, and the rider is making a flight.",
       "Shared rides, hourly rides, fleets, and multi-driver dispatch each stressed the same seam between what the rider was told and what the system could guarantee.",
