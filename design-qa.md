@@ -71,6 +71,7 @@ Results:
 - Case-study structure and length remain intact. Decision language now distinguishes individual design work, cross-functional partnership, and broader program outcomes without changing any result value.
 - Consent consistently treats `6 wks → 4 days` as its primary outcome while retaining all four original metrics.
 - Catalog entries remain reverse chronological within each company. Symphony and Consent sub-work is explicitly labeled as program contributions or capabilities rather than independent projects.
+- Uber now reads final-to-first: Identity & Rewards; Rentals, Intercity, Hourly, and Reserve; Multi-driver Dispatch; then Fleet Match. Sequence labels avoid inventing unsupported project-level dates. Expedia entries are constrained to Matt's 2016–2017 tenure.
 - Homepage and About use complementary descriptions of the working model, and “What I want next” is focused on two hiring-relevant problem spaces.
 - The About page ends with the catalog link; the redundant Elsewhere section is removed while contact links remain in the global footer.
 - Independent content, new media, new routes, and unsupported evidence were not introduced.

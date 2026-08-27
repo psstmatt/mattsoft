@@ -163,10 +163,10 @@ export const cases: CaseStudy[] = [
     role: "Senior Product Designer",
     problem: [
       "A ride booked days ahead is a promise made by a marketplace that does not exist yet. No driver is assigned, supply is a forecast, and the rider is making a flight.",
-      "Shared rides, hourly rides, fleets, and multi-driver dispatch each stressed the same seam between what the rider was told and what the system could guarantee.",
+      "Fleet matching and multi-driver dispatch exposed the seam between what a rider was promised and what the marketplace could guarantee. That foundation later unlocked Reserve, Hourly, Intercity, and Rentals.",
     ],
     scope: [
-      "Reserve rider and driver experience, shared rides, hourly rides, fleet match, dispatch, identity, and rewards surfaces.",
+      "Fleet Match, multi-driver dispatch, Reserve, Hourly, Intercity, Rentals, and later identity and rewards surfaces.",
       "Interaction hierarchy for time-critical moments: assignment, arrival, wait, and no-show.",
     ],
     decision: [
@@ -176,7 +176,7 @@ export const cases: CaseStudy[] = [
     ],
     shipped: [
       "Uber Reserve rider booking, driver assignment, and arrival experiences.",
-      "Shared and hourly ride flows, fleet match, and multi-driver dispatch interfaces.",
+      "Fleet Match and multi-driver dispatch foundations, followed by Hourly, Intercity, and Rentals experiences.",
       "A shared vocabulary for marketplace certainty used across scheduling surfaces.",
     ],
     result: [
@@ -248,32 +248,41 @@ export const catalog: CatalogGroup[] = [
   {
     company: "Uber",
     items: [
-      { title: "Fleet Match", note: "Fleet supply matched to demand shape.", years: "2022" },
       {
-        title: "Uber Reserve",
-        note: "Scheduled rides for riders and drivers.",
-        years: "2020—22",
-        slug: "reserve",
+        title: "Identity & rewards",
+        note: "Final tenure chapter: verification and loyalty surfaces.",
+        years: "Final",
       },
       {
-        title: "Multi-driver dispatch",
-        note: "Assignment and reassignment mechanics.",
-        years: "2021",
+        title: "Rentals",
+        note: "Rental-car access built on the marketplace platform.",
+        years: "Later",
+      },
+      {
+        title: "Intercity",
+        note: "Longer-distance booking and marketplace expectations.",
+        years: "Later",
       },
       {
         title: "Hourly rides",
         note: "Time-based booking with an open destination.",
-        years: "2021",
+        years: "Later",
       },
       {
-        title: "Identity & rewards",
-        note: "Verification and loyalty surfaces.",
-        years: "2019—21",
+        title: "Uber Reserve",
+        note: "Scheduled rides for riders and drivers.",
+        years: "Later",
+        slug: "reserve",
       },
       {
-        title: "Shared rides",
-        note: "Multi-rider routing and expectation setting.",
-        years: "2019—20",
+        title: "Multi-driver dispatch",
+        note: "Assignment and reassignment mechanics that unlocked later booking products.",
+        years: "Second",
+      },
+      {
+        title: "Fleet Match",
+        note: "First Uber program: fleet supply matched to demand shape.",
+        years: "First",
       },
     ],
   },
@@ -283,13 +292,13 @@ export const catalog: CatalogGroup[] = [
       {
         title: "Bots & Voice",
         note: "Managed a team of 5+ on conversational travel products.",
-        years: "2017—19",
+        years: "2016—17",
       },
-      { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—19" },
+      { title: "Trips", note: "Saved travel, itineraries, and re-engagement.", years: "2016—17" },
       {
         title: "Price change experiences",
         note: "Telling travelers what changed and what to do.",
-        years: "2018",
+        years: "2016—17",
       },
     ],
   },
