@@ -3,6 +3,8 @@ import { cases, type CaseStudyListItem } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundAnchor, SoundLink } from "@/components/sound-link";
 import { CountUp } from "@/components/count-up";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/work/$slug")({
   loader: ({ params }) => {
@@ -13,20 +15,27 @@ export const Route = createFileRoute("/work/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Not found — Matt Reynolds" }, { name: "robots", content: "noindex" }],
+        meta: [
+          { title: "Not found — Matt Reynolds" },
+          { name: "robots", content: "noindex, nofollow" },
+        ],
       };
     }
     const { study } = loaderData;
     const title = `${study.title} — ${study.company} — Matt Reynolds`;
+    const path = `/work/${study.slug}`;
     return {
       meta: [
         { title },
+        canonicalRobotsMeta(),
         { name: "description", content: study.proof },
         { property: "og:title", content: title },
+        { property: "og:url", content: canonicalUrl(path) },
         { property: "og:description", content: study.proof },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: study.proof },
       ],
+      links: [canonicalLink(path)],
     };
   },
   component: CasePage,

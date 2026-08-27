@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { howIWork, lookingFor } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — Matt Reynolds" },
+      canonicalRobotsMeta(),
       {
         name: "description",
         content:
           "Seattle-based product and software designer, 15 years across Boeing, Expedia, Uber, Meta, and TikTok. How I work, and what I'm looking for next.",
       },
       { property: "og:title", content: "About — Matt Reynolds" },
+      { property: "og:url", content: canonicalUrl("/about") },
       {
         property: "og:description",
         content: "How I work as a player-coach designer, and the kinds of problems I want next.",
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/about")({
         content: "How I work as a player-coach designer, and the kinds of problems I want next.",
       },
     ],
+    links: [canonicalLink("/about")],
   }),
   component: AboutPage,
 });

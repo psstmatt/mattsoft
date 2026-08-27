@@ -92,9 +92,26 @@ Results:
 - Vercel-targeted Nitro SSR build: passed and produced `.vercel/output/functions/__server.func`.
 - Browser console: 0 warnings and 0 errors across routes and interactions.
 
+## Production-readiness verification
+
+The 2026-08-26 production gate added host-aware indexing, canonical metadata, discovery files, legacy-link continuity, Vercel observability, and CI without changing the approved visual or content baseline.
+
+- Frozen Bun 1.3.14 install passed from the committed lockfile in an isolated non-iCloud mirror.
+- TypeScript passed with no errors. ESLint passed with the same 8 inherited Fast Refresh warnings documented above. The production Nitro build passed.
+- SSR returned `200` for all seven canonical routes. On the exact `psstmatt.com` host, each returned one `index, follow` robots meta tag and matching response header. On a generated-host simulation, each returned one `noindex, nofollow` robots meta tag and matching response header.
+- `/work/petloop`, `/work/not-a-real-project`, and `/not-a-real-route` returned real HTTP `404` responses with the custom recovery UI and `noindex, nofollow`.
+- Canonical links and `og:url` values were verified on every public route. `sitemap.xml` contains exactly the same seven routes, and `robots.txt` references it.
+- All 31 legacy project hashes were checked against the compatibility map. Browser checks covered one representative from each destination, query-string preservation, and safe clearing of an unknown hash.
+- Web Analytics and Speed Insights use one exact-host `beforeSend` guard. Canonical-host events pass; generated-host and malformed-URL events return `null`. Browser debug output confirmed the localhost pageview was ignored.
+- The compiled client contains neither the TanStack server import nor the server request helper used to choose robots metadata.
+- Responsive browser checks at 320, 390, 768, and 1280px found no horizontal overflow. Header controls remained in one row and measured at least `44 × 44px`.
+- Theme switching, hydration, persistence across route navigation and reload, active navigation state, case-study metadata, recognition-link safety, final accessible metric values, and custom 404 content passed browser checks.
+
+The final Vercel Production URL, exact merged Git SHA, deployment state, and runtime-log check are reported with the release handoff so the deployed artifact can remain byte-identical to GitHub `main`.
+
 ## P3 notes
 
-- The build reports the inherited 520KB client-chunk warning.
+- The build reports the inherited 527KB client-chunk warning.
 - The exported shadcn/Radix component scaffold is broader than the current site uses; pruning it is optional later and was excluded from this fidelity checkpoint.
 
 final result: passed

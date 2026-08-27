@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { cases, homeHowIWork, site } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Matt Reynolds — Product & Software Designer" },
+      canonicalRobotsMeta(),
       {
         name: "description",
         content:
           "Staff product designer creating trustworthy products for complex AI, platform, marketplace, and operational systems.",
       },
       { property: "og:title", content: "Matt Reynolds — Product & Software Designer" },
+      { property: "og:url", content: canonicalUrl("/") },
       {
         property: "og:description",
         content:
@@ -25,6 +29,7 @@ export const Route = createFileRoute("/")({
           "Staff-level product design across GenAI at TikTok, consent at Meta, marketplaces at Uber, travel at Expedia, and operations at Boeing.",
       },
     ],
+    links: [canonicalLink("/")],
   }),
   component: Index,
 });

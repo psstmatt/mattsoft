@@ -2,17 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { catalog } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
+import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
+import { canonicalRobotsMeta } from "@/lib/robots";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
     meta: [
       { title: "Work catalog — Matt Reynolds" },
+      canonicalRobotsMeta(),
       {
         name: "description",
         content:
           "Everything worth listing: TikTok Symphony, Meta consent infrastructure, Uber Reserve and dispatch, Expedia Trips and Bots & Voice, and Boeing operations.",
       },
       { property: "og:title", content: "Work catalog — Matt Reynolds" },
+      { property: "og:url", content: canonicalUrl("/catalog") },
       {
         property: "og:description",
         content: "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, and Boeing.",
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/catalog")({
         content: "Fifteen years of shipped work across TikTok, Meta, Uber, Expedia, and Boeing.",
       },
     ],
+    links: [canonicalLink("/catalog")],
   }),
   component: CatalogPage,
 });
