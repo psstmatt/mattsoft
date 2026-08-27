@@ -21,6 +21,8 @@ import { canonicalUrl } from "../lib/site-metadata";
 import { allowCanonicalTelemetry } from "../lib/telemetry";
 
 const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('psstmatt.theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
+const SOCIAL_IMAGE_ALT =
+  "A glossy floating avatar in purple sunglasses bursting through bright white clouds, followed by a pink pixel star.";
 
 function NotFoundComponent() {
   return (
@@ -76,17 +78,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "Matt Reynolds" },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: canonicalUrl("/og-image.png") },
-      { property: "og:image:width", content: "1920" },
-      { property: "og:image:height", content: "1080" },
-      { property: "og:image:alt", content: "Matt Reynolds — Product & Software Designer" },
+      { property: "og:image", content: canonicalUrl("/og-image.jpg") },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: SOCIAL_IMAGE_ALT },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: canonicalUrl("/og-image.png") },
-      { name: "twitter:image:alt", content: "Matt Reynolds — Product & Software Designer" },
+      { name: "twitter:image", content: canonicalUrl("/x-image.jpg") },
+      { name: "twitter:image:alt", content: SOCIAL_IMAGE_ALT },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { rel: "icon", href: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,

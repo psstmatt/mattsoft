@@ -2,7 +2,7 @@
 
 - Source: `https://motion-whisper-portfolio.lovable.app`
 - Lovable source commit: `50de093c6d9a3935225a7de0672c0618d905e095`
-- Local QA date: 2026-08-26
+- Local QA date: 2026-08-26; social identity assets: 2026-08-27
 - Browser: Playwright Chromium
 - Desktop comparison viewport: `1280 × 720`
 - Mobile comparison viewport: `390 × 844`
@@ -48,7 +48,7 @@ Results:
 | `/work/petloop`            |    404 | Not found — Matt Reynolds                                            | Removed project uses the custom 404 and noindex |
 | `/work/not-a-real-project` |    404 | Not found — Matt Reynolds                                            | Custom message, catalog link, noindex           |
 
-- Route descriptions, Open Graph titles/descriptions, Twitter titles/descriptions, favicon, and the copied OG image were verified.
+- Route descriptions, Open Graph titles/descriptions, Twitter titles/descriptions, the portrait favicon links, and the social-card metadata were verified.
 - Every review page includes a noindex meta directive. `vercel.json` adds `X-Robots-Tag: noindex, nofollow` to the deployed review responses.
 - The four employment case-study next links loop in reverse chronological order: Symphony → Consent → Reserve → Deliveries → Symphony.
 
@@ -78,10 +78,12 @@ Results:
 
 ## Assets and platform exclusions
 
-- Work Sans 300/400/400 italic/500, JetBrains Mono 400/500, the 256px favicon, and the 1920×1080 OG image are local and returned HTTP 200.
-- The copied asset hashes match the captured Lovable production assets.
+- Work Sans 300/400/400 italic/500 and JetBrains Mono 400/500 remain local. The active multi-size portrait favicon family, separately named cloud favicon family, 1200×630 Open Graph card, and 1200×600 X card are local and present in the production build.
+- Unchanged baseline asset hashes continue to match the captured Lovable production assets.
 - Browser asset inventory showed only same-origin product assets. No Google Fonts, Lovable, R2, or GPT Engineer asset dependency remains.
 - The build contains no Lovable badge, CameraPlain font, `~flock.js`, `~api/analytics`, `__lovableEvents`, or `__lovableReportRuntimeError` integration.
+
+The social identity update keeps the portrait family active through `/favicon.ico`, exact-size PNG links, and `/apple-touch-icon.png`. The cloud family ships under `clouds-*` filenames as a separate inactive option. Shared metadata points Open Graph consumers to `/og-image.jpg` and X to `/x-image.jpg`; the lossless `/og-image.png` master also ships for future use.
 
 ## Build verification
 
