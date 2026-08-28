@@ -178,7 +178,7 @@ function CasePage() {
           </SoundLink>
         )}
         <SoundLink to="/catalog">Full catalog</SoundLink>
-        <SoundLink to="/">Index</SoundLink>
+        <SoundLink to="/">Home</SoundLink>
       </nav>
     </article>
   );

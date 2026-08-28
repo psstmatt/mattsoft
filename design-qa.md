@@ -34,6 +34,31 @@ Results:
 - The header stays on one row at `390 × 844`. Measured document width equals viewport width at both tested sizes (`390/390` and `1280/1280`), with no horizontal overflow.
 - No P0, P1, P2, or residual P3 visual differences remain.
 
+## Footer and navigation clarity regression — 2026-08-27
+
+- Source visual truth: `/var/folders/x6/ckgkpwsj29l5svpybht0thtw0000gn/T/codex-clipboard-21676f25-5976-4d14-9c91-6c7e87ee7bfe.png` (`3040 × 1926`, annotated Safari capture).
+- Rendered implementation evidence:
+  - `/private/tmp/mattsoft-footer-qa-evidence/catalog-footer-desktop-dark-1280x720-render.png`
+  - `/private/tmp/mattsoft-footer-qa-evidence/catalog-footer-desktop-light-1280x720-render.png`
+  - `/private/tmp/mattsoft-footer-qa-evidence/catalog-footer-mobile-dark-390x844.jpg`
+  - `/private/tmp/mattsoft-footer-qa-evidence/catalog-footer-mobile-light-390x844.jpg`
+- Focused source/implementation comparison: `/private/tmp/mattsoft-footer-qa-evidence/source-left-implementation-right-footer-comparison.png` (source left, implementation right). The annotated source footer was cropped from `1400 × 520` source pixels and normalized 2:1 to `700 × 260`; the implementation footer used a same-size `700 × 260` crop from the `1280 × 720` browser render.
+- Browser and state: Codex in-app browser, `/catalog` scrolled to the footer, dark and light themes, `devicePixelRatio: 1`. Primary captures used `1280 × 720` and `390 × 844`; overflow smokes used 320px and 768px widths.
+
+Findings and required fidelity surfaces:
+
+- **Fonts and typography:** passed. All four contact rows compute to `align-items: baseline`; the existing 11px JetBrains Mono labels and 15px Work Sans values are unchanged and now share the intended typographic baseline.
+- **Spacing and layout rhythm:** passed. The 96px label column and 24px gap are unchanged. All labels and all values retain identical column starts at desktop, mobile, and tablet widths; measured document width equals client width at 320, 390, 768, and 1280px.
+- **Colors and tokens:** passed. No color or theme token changed, and the footer remains visually coherent in dark and light themes.
+- **Image quality and assets:** not applicable to the affected UI. No image or icon asset was added, replaced, or altered; the red markup belongs only to the supplied reference.
+- **Copy and content:** passed. Case-study navigation now says `Home`; the catalog says `Back home →`; the 404 says `Back home`; every destination remains `/`. The visible email remains `mr@hey.com`, and its decoded subject is exactly `👋 Hey from psstmatt.com` with no body or quotation marks.
+- **Interaction and accessibility:** passed. Home links returned to `/` from Symphony, Consent, Reserve, Deliveries, the catalog, and the 404. The email retains no `target` or `rel`; external footer links retain `_blank` and `noreferrer`. Keyboard focus exposes the existing 2px solid focus ring with a 4px offset. Browser console check returned zero warnings and zero errors.
+- **Build gate:** passed in a clean non-iCloud mirror with Bun 1.3.14 using `npx --yes bun@1.3.14 run check`. TypeScript and the production build passed; ESLint retained only the eight previously documented Fast Refresh warnings and the build retained the inherited 527KB chunk warning.
+
+Comparison history:
+
+- Pre-fix P2: the smaller mono labels sat visibly above the contact values in the supplied Safari screenshot. Fix: baseline-align the existing flex rows without changing dimensions or typography. Post-fix evidence: the focused comparison above plus the four rendered viewport captures. No actionable P0, P1, or P2 finding remains.
+
 ## Routes and metadata
 
 | Route                      | Status | Title                                                                | Content contract                                |
@@ -61,7 +86,7 @@ Results:
 - Count-up values retain their final accessible name from first render while a decorative copy animates for 600ms. Symphony exposes `#1`, `60%`, `92%`, and `$3.3M`; Consent exposes `6 wks → 4 days`, `32`, `4`, and `100%`.
 - Reduced-motion branches render static reveals and immediate final metric values, and CSS disables remaining transitions and animations.
 - Hover, reveal, navigation, and theme interactions exercised the Web Audio trigger path after user activation; the browser reported no warnings or errors.
-- External footer links retain `_blank` plus `noreferrer`; email remains a `mailto:` URL.
+- External footer links retain `_blank` plus `noreferrer`; email remains a `mailto:` URL with subject `👋 Hey from psstmatt.com` and no new-window attributes.
 - The Symphony case study separates iF Design recognition from shipped deliverables and links to the official award page with keyboard focus, sound behavior, `_blank`, and `noreferrer` intact.
 
 ## Hiring-panel content review
@@ -113,5 +138,6 @@ The final Vercel Production URL, exact merged Git SHA, deployment state, and run
 
 - The build reports the inherited 527KB client-chunk warning.
 - The exported shadcn/Radix component scaffold is broader than the current site uses; pruning it is optional later and was excluded from this fidelity checkpoint.
+- The repository has no committed browser-test harness, so the exact footer alignment, Home copy, and decoded email subject are covered by this dated browser evidence rather than an automated regression test.
 
 final result: passed
