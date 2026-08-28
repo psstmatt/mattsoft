@@ -1,34 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Moon, Sun } from "lucide-react";
 import { site } from "@/content/site";
 import { useSound } from "@/lib/sound";
+import { applyTheme, persistTheme, readStoredTheme, syncThemeFavicons } from "@/lib/theme";
 import { SoundAnchor, SoundLink } from "./sound-link";
 
 function useTheme() {
   const [dark, setDark] = useState(true);
   useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem("psstmatt.theme");
-    } catch {
-      /* ignore */
-    }
-    const isDark = stored ? stored === "dark" : true;
+    const isDark = readStoredTheme();
     setDark(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    applyTheme(isDark);
   }, []);
   const toggle = () => {
     setDark((prev) => {
       const next = !prev;
-      document.documentElement.classList.toggle("dark", next);
-      document.documentElement.style.colorScheme = next ? "dark" : "light";
-      try {
-        window.localStorage.setItem("psstmatt.theme", next ? "dark" : "light");
-      } catch {
-        /* ignore */
-      }
+      applyTheme(next);
+      persistTheme(next);
       return next;
     });
   };
@@ -41,9 +30,18 @@ const controlClass =
 export function Header() {
   const { play } = useSound();
   const { dark, toggle: toggleTheme } = useTheme();
+  const hasMounted = useRef(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const themeLabel = dark ? "Switch to light mode" : "Switch to dark mode";
   const workActive = pathname === "/catalog" || pathname.startsWith("/work/");
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+    syncThemeFavicons(dark);
+  }, [dark, pathname]);
 
   return (
     <header className="mx-auto flex w-full max-w-[68ch] items-center justify-between px-6 pt-8 pb-12 sm:pt-12 sm:pb-14">
