@@ -88,7 +88,7 @@ function CatalogPage() {
 
       <Reveal delay={0.05}>
         <p className="mt-16 text-[15px]">
-          <SoundLink to="/">Back to the index →</SoundLink>
+          <SoundLink to="/">Back home →</SoundLink>
         </p>
       </Reveal>
     </div>

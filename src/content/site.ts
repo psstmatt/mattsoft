@@ -6,7 +6,11 @@ export const site = {
   status:
     "Staff Product Designer leading advertiser-facing GenAI work at TikTok. Previously Meta, Uber, Expedia, and Boeing.",
   contact: [
-    { label: "Email", value: "mr@hey.com", href: "mailto:mr@hey.com" },
+    {
+      label: "Email",
+      value: "mr@hey.com",
+      href: "mailto:mr@hey.com?subject=%F0%9F%91%8B%20Hey%20from%20psstmatt.com",
+    },
     {
       label: "LinkedIn",
       value: "linkedin.com/in/psstmatt",

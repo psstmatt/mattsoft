@@ -33,7 +33,7 @@ function NotFoundComponent() {
       <p className="mt-6 text-2xl leading-snug">That page doesn't exist.</p>
       <p className="mt-4 text-muted-foreground">
         <Link to="/" className="underline underline-offset-[5px]">
-          Back to the index
+          Back home
         </Link>
       </p>
     </div>

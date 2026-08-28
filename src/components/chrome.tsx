@@ -97,7 +97,7 @@ export function Footer() {
         </p>
         <ul className="mt-5 space-y-2 text-[15px]">
           {site.contact.map((c) => (
-            <li key={c.label} className="flex gap-6">
+            <li key={c.label} className="flex items-baseline gap-6">
               <span className="w-24 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 {c.label}
               </span>
