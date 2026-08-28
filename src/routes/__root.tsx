@@ -19,8 +19,10 @@ import { Header, Footer } from "../components/chrome";
 import { LEGACY_HASH_SCRIPT } from "../lib/legacy-hashes";
 import { canonicalUrl } from "../lib/site-metadata";
 import { allowCanonicalTelemetry } from "../lib/telemetry";
+import { THEME_FAVICONS, THEME_STORAGE_KEY } from "../lib/theme";
 
-const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('psstmatt.theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
+const FAVICON_SCRIPT = `(function(){var f=${JSON.stringify(THEME_FAVICONS)}[document.documentElement.classList.contains('dark')?'dark':'light'];for(var id in f){var l=document.getElementById(id);if(l)l.setAttribute('href',f[id]);}})();`;
 const SOCIAL_IMAGE_ALT =
   "A glossy floating avatar in purple sunglasses bursting through bright white clouds, followed by a pink pixel star.";
 
@@ -89,10 +91,39 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "icon", href: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { rel: "icon", href: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      {
+        id: "theme-favicon-ico",
+        rel: "icon",
+        href: THEME_FAVICONS.dark["theme-favicon-ico"],
+        type: "image/x-icon",
+      },
+      {
+        id: "theme-favicon-16",
+        rel: "icon",
+        href: THEME_FAVICONS.dark["theme-favicon-16"],
+        type: "image/png",
+        sizes: "16x16",
+      },
+      {
+        id: "theme-favicon-32",
+        rel: "icon",
+        href: THEME_FAVICONS.dark["theme-favicon-32"],
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
+        id: "theme-favicon-48",
+        rel: "icon",
+        href: THEME_FAVICONS.dark["theme-favicon-48"],
+        type: "image/png",
+        sizes: "48x48",
+      },
+      {
+        id: "theme-apple-touch-icon",
+        rel: "apple-touch-icon",
+        href: THEME_FAVICONS.dark["theme-apple-touch-icon"],
+        sizes: "180x180",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -108,6 +139,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_SCRIPT }} />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: FAVICON_SCRIPT }} />
       </head>
       <body>
         {children}

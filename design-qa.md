@@ -2,7 +2,7 @@
 
 - Source: `https://motion-whisper-portfolio.lovable.app`
 - Lovable source commit: `50de093c6d9a3935225a7de0672c0618d905e095`
-- Local QA date: 2026-08-26; social identity assets: 2026-08-27
+- Local QA date: 2026-08-26; social identity assets: 2026-08-27; theme favicons: 2026-08-28
 - Browser: Playwright Chromium
 - Desktop comparison viewport: `1280 × 720`
 - Mobile comparison viewport: `390 × 844`
@@ -48,13 +48,13 @@ Results:
 | `/work/petloop`            |    404 | Not found — Matt Reynolds                                            | Removed project uses the custom 404 and noindex |
 | `/work/not-a-real-project` |    404 | Not found — Matt Reynolds                                            | Custom message, catalog link, noindex           |
 
-- Route descriptions, Open Graph titles/descriptions, Twitter titles/descriptions, the portrait favicon links, and the social-card metadata were verified.
+- Route descriptions, Open Graph titles/descriptions, Twitter titles/descriptions, the theme-aware cloud favicon links, and the social-card metadata were verified.
 - Every review page includes a noindex meta directive. `vercel.json` adds `X-Robots-Tag: noindex, nofollow` to the deployed review responses.
 - The four employment case-study next links loop in reverse chronological order: Symphony → Consent → Reserve → Deliveries → Symphony.
 
 ## Interactions and accessibility
 
-- Dark is the default. The theme toggle is a single Sun/Moon action icon with a matching title and ARIA name; it persists through reload and survives navigation.
+- Dark is the default. The theme toggle is a single Sun/Moon action icon with a matching title and ARIA name; it persists through reload and survives navigation. The rounded favicon changes with the same saved state: daytime clouds in light mode and nighttime clouds in dark mode.
 - Work and About navigation is client-side, the active link receives `aria-current="page"`, and browser Back restores `/` at scroll position 0.
 - Work, About, and theme controls provide at least `44 × 44px` targets. Header controls, work cards, and footer links use an authored high-contrast focus ring; Work and About expose visible active states.
 - Work-card hover and focus use a 150ms tint without changing padding or row position. Metrics remain exposed on coarse pointers and reserve their reveal space on fine pointers without shifting adjacent content.
@@ -78,12 +78,12 @@ Results:
 
 ## Assets and platform exclusions
 
-- Work Sans 300/400/400 italic/500 and JetBrains Mono 400/500 remain local. The active multi-size portrait favicon family, separately named cloud favicon family, 1200×630 Open Graph card, and 1200×600 X card are local and present in the production build.
+- Work Sans 300/400/400 italic/500 and JetBrains Mono 400/500 remain local. The active rounded daytime and nighttime cloud favicon families, 1200×630 Open Graph card, and 1200×600 X card are local and present in the production build.
 - Unchanged baseline asset hashes continue to match the captured Lovable production assets.
 - Browser asset inventory showed only same-origin product assets. No Google Fonts, Lovable, R2, or GPT Engineer asset dependency remains.
 - The build contains no Lovable badge, CameraPlain font, `~flock.js`, `~api/analytics`, `__lovableEvents`, or `__lovableReportRuntimeError` integration.
 
-The social identity update keeps the portrait family active through `/favicon.ico`, exact-size PNG links, and `/apple-touch-icon.png`. The cloud family ships under `clouds-*` filenames as a separate inactive option. Shared metadata points Open Graph consumers to `/og-image.jpg` and X to `/x-image.jpg`; the lossless `/og-image.png` master also ships for future use.
+The favicon resolver maps the site's saved light theme to distinct `favicon-day-*` assets and its saved dark theme to `favicon-night-*` assets before body rendering, then updates the same links immediately when the theme changes. Browser favicon PNG and ICO files use a consistent 22% rounded alpha mask. Apple touch and install-size icons remain full-bleed so their platforms can apply native masks. Shared metadata points Open Graph consumers to `/og-image.jpg` and X to `/x-image.jpg`; the lossless `/og-image.png` master also ships for future use.
 
 ## Build verification
 
