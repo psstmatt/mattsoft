@@ -329,6 +329,18 @@ export const catalog: CatalogGroup[] = [
   },
 ];
 
+export const sidequests: { title: string; description: string; url?: string }[] = [
+  {
+    title: "Tidal House",
+    description: "Vintage A-frame chalets reimagined for a coastal getaway in Ocean Shores.",
+    url: "https://thetidalhouse.com/about",
+  },
+  {
+    title: "Metabolic Brewing Co",
+    description: "Craft beer with bold flavors and a community spirit.",
+  },
+];
+
 export const howIWork: string[] = [
   "I work as a player-coach: shaping product strategy and reusable systems while personally designing the interactions with the most risk.",
   "I stay close to engineering through implementation, using prototypes and working software to resolve questions that a specification cannot.",

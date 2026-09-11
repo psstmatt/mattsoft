@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { catalog } from "@/content/site";
+import { catalog, sidequests } from "@/content/site";
 import { Reveal } from "@/components/reveal";
-import { SoundLink } from "@/components/sound-link";
+import { SoundAnchor, SoundLink } from "@/components/sound-link";
 import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
 import { canonicalRobotsMeta } from "@/lib/robots";
 
@@ -85,6 +85,35 @@ function CatalogPage() {
           </ul>
         </section>
       ))}
+
+      <section className="mt-16" aria-labelledby="sidequests">
+        <Reveal>
+          <h2
+            id="sidequests"
+            className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Sidequests
+          </h2>
+        </Reveal>
+        <ul className="mt-5">
+          {sidequests.map((item, i) => (
+            <Reveal as="li" key={item.title} delay={i * 0.03} className="rule-row py-4">
+              <div className="text-[16px] leading-snug">
+                {item.url ? (
+                  <SoundAnchor href={item.url} className="catalog-case-link">
+                    {item.title}
+                  </SoundAnchor>
+                ) : (
+                  item.title
+                )}
+              </div>
+              <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
+                {item.description}
+              </p>
+            </Reveal>
+          ))}
+        </ul>
+      </section>
 
       <Reveal delay={0.05}>
         <p className="mt-16 text-[15px]">
