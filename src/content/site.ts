@@ -17,7 +17,6 @@ export const site = {
       href: "https://linkedin.com/in/psstmatt",
     },
     { label: "TikTok", value: "@psttmatt", href: "https://tiktok.com/@psttmatt" },
-    { label: "Calendar", value: "cal.com/psstmatt", href: "https://cal.com/psstmatt" },
   ],
 } as const;
 
@@ -323,7 +322,7 @@ export const catalog: CatalogGroup[] = [
       {
         title: "Enterprise search",
         note: "Cross-system record retrieval for operations.",
-        years: "2012",
+        years: "2010—2016",
       },
     ],
   },
