@@ -31,5 +31,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Experience and telemetry tests
+        run: bun test tests
+
       - name: Build
         run: bun run build

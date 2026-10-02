@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { SoundProvider } from "../lib/sound";
 import { Header, Footer } from "../components/chrome";
+import { PortfolioExperience, COMPUTER_BOOTSTRAP } from "../components/portfolio-experience";
 import { LEGACY_HASH_SCRIPT } from "../lib/legacy-hashes";
 import { canonicalUrl } from "../lib/site-metadata";
 import { allowCanonicalTelemetry } from "../lib/telemetry";
@@ -139,6 +140,14 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_SCRIPT }} />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: COMPUTER_BOOTSTRAP }} />
+        <noscript>
+          <style>
+            {
+              ".computer-entry [data-portfolio-surface]{visibility:visible}.portfolio-computer{display:none!important}html.computer-entry{overflow:auto}"
+            }
+          </style>
+        </noscript>
         <script dangerouslySetInnerHTML={{ __html: FAVICON_SCRIPT }} />
       </head>
       <body>
@@ -183,14 +192,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SoundProvider>
-        <div className="min-h-screen">
+        <PortfolioExperience>
           <Header />
           <PageTransition>
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
           </PageTransition>
           <Footer />
-        </div>
+        </PortfolioExperience>
       </SoundProvider>
     </QueryClientProvider>
   );
