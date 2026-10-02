@@ -39,3 +39,9 @@ bun run check
 - Legacy hash URLs from the previous portfolio resolve to the closest surviving case study or catalog entry.
 
 The Vercel Production artifact can be staged without assigning a domain. Moving `psstmatt.com`, changing aliases, and changing DNS remain a separate, explicit cutover step.
+
+## Computer entrance
+
+The homepage opens with a green computer. Click or tap its screen to enter, or use Tab and Enter. Escape and Skip intro open the portfolio directly. Reduced-motion preferences skip the zoom. The rainbow stays visible for four seconds after entry and then fades. Direct links to project pages keep their normal navigation.
+
+Vercel Web Analytics and Speed Insights retain their original canonical-host guards and project configuration. Run `bun test tests` for the entrance timing, material color, and telemetry checks in addition to the existing checks.

@@ -1,0 +1,188 @@
+html.computer-entry {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+.computer-entry [data-portfolio-surface] {
+  visibility: hidden;
+}
+.computer-handover [data-portfolio-surface] {
+  visibility: visible;
+  will-change: transform;
+}
+.portfolio-surface {
+  position: relative;
+  isolation: isolate;
+  outline: none;
+}
+.portfolio-surface main:focus {
+  outline: none;
+}
+.portfolio-computer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  touch-action: none;
+  outline: none;
+}
+.computer-entry .portfolio-computer {
+  display: block;
+}
+.computer-entry.computer-handover .portfolio-computer {
+  background: transparent;
+}
+.computer-poster {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + min(100vh, 150vw) * 0.01);
+  width: calc(min(100vh, 150vw) * 0.3);
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: none;
+  animation: computer-arrive 0.38s cubic-bezier(0.2, 0, 0, 1) both;
+  mask-image:
+    linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+[data-computer-entrance][data-ready="true"] .computer-poster {
+  visibility: hidden;
+  transition: visibility 0s 0.24s;
+}
+.computer-stage {
+  position: absolute;
+  inset: 0;
+}
+.computer-stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s cubic-bezier(0.2, 0, 0, 1);
+}
+[data-computer-entrance][data-ready="true"] .computer-stage canvas {
+  opacity: 1;
+}
+.computer-screen-hit {
+  position: absolute;
+  z-index: 3;
+  left: 37%;
+  top: 28%;
+  width: 26%;
+  height: 28%;
+  border-radius: 12%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.computer-screen-hit:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 7px;
+}
+.computer-skip {
+  position: absolute;
+  left: 50%;
+  bottom: max(36px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.computer-skip:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.computer-skip:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes computer-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+}
+
+.portfolio-rainbow {
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: clamp(14rem, 32vh, 22rem);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  --c-bg: var(--background);
+  --c-dark-bg: var(--background);
+  --c-accent: oklch(50% 0.24 265);
+}
+.portfolio-rainbow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 240deg at 50% -30%,
+    #e56f9a,
+    #ebb557,
+    #64c4a6,
+    #58b4e9,
+    #9182e4,
+    #df80b5
+  );
+  opacity: 0.22;
+  filter: blur(22px);
+  mask-image: radial-gradient(ellipse 70% 115% at 50% 0%, #000, transparent 70%);
+}
+.dark .portfolio-rainbow::before {
+  opacity: 0.42;
+}
+.portfolio-rainbow[data-shader-ready="true"]::before {
+  opacity: 0;
+}
+.portfolio-rainbow[data-phase="visible"] {
+  opacity: 1;
+}
+.portfolio-rainbow[data-phase="fading"],
+.portfolio-rainbow[data-phase="done"],
+.portfolio-rainbow[data-phase="waiting"] {
+  opacity: 0;
+}
+.portfolio-rainbow[data-phase="done"] {
+  display: none;
+}
+.portfolio-rainbow canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 639px) {
+  .portfolio-rainbow {
+    height: clamp(18rem, 40vh, 24rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .computer-poster {
+    animation: none;
+  }
+  .computer-stage canvas,
+  .portfolio-rainbow {
+    transition: none;
+  }
+}
