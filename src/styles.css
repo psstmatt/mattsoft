@@ -2,6 +2,7 @@
 @source "../src";
 @import "tw-animate-css";
 @import "./components/portfolio-experience.css";
+@import "./components/portfolio-hover.css";
 
 @font-face {
   font-family: "Work Sans";
@@ -215,25 +216,6 @@
 
 @utility rule-row {
   border-top: 1px solid var(--color-border);
-  transition: background-color 150ms ease;
-
-  &:hover,
-  &:focus-within {
-    background-color: color-mix(in oklab, var(--color-foreground) 4%, transparent);
-  }
-}
-
-.metric-detail {
-  max-height: 4rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 160ms ease;
-}
-
-.group:hover .metric-detail,
-.group:focus-visible .metric-detail {
-  opacity: 1;
-  visibility: visible;
 }
 
 .result-primary dt {

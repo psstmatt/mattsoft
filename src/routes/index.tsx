@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cases, homeHowIWork, site } from "@/content/site";
 import { Reveal } from "@/components/reveal";
+import { ProjectRow } from "@/components/project-row";
 import { SoundLink } from "@/components/sound-link";
 import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
 import { canonicalRobotsMeta } from "@/lib/robots";
@@ -63,29 +64,7 @@ function Index() {
         <ol className="mt-8">
           {cases.map((c, i) => (
             <Reveal as="li" key={c.slug} delay={i * 0.05} sound>
-              <SoundLink
-                to="/work/$slug"
-                params={{ slug: c.slug }}
-                className="rule-row group block py-6 no-underline"
-              >
-                <div className="flex items-baseline gap-4">
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-lg leading-snug">{c.title}</span>
-                    <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {c.company} — {c.years}
-                    </span>
-                  </span>
-                </div>
-                <p className="mt-3 pl-[calc(1.5rem+1ch)] text-[15px] leading-relaxed text-muted-foreground">
-                  {c.proof}
-                </p>
-                <p className="metric-detail mt-2 overflow-hidden pl-[calc(1.5rem+1ch)] font-mono text-[12px] text-muted-foreground">
-                  {c.headlineMetric.value} — {c.headlineMetric.label}
-                </p>
-              </SoundLink>
+              <ProjectRow project={c} index={i} />
             </Reveal>
           ))}
         </ol>

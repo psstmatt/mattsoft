@@ -1,0 +1,102 @@
+.portfolio-row {
+  position: relative;
+  isolation: isolate;
+  border-top: 1px solid var(--border);
+  color: var(--foreground);
+  text-decoration: none;
+}
+.project-row {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-block: 1.5rem;
+}
+.project-number { align-self: baseline; }
+.project-content { min-width: 0; }
+.row-heading { display: flex; align-items: baseline; gap: 1rem; min-width: 0; }
+.row-title { min-width: 0; }
+.row-cue {
+  flex: 0 0 1rem;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  transition: transform 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+.catalog-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 1.5rem;
+  row-gap: 0.25rem;
+  padding-block: 1rem;
+}
+.catalog-years { white-space: nowrap; justify-self: end; }
+.catalog-note { grid-column: 1 / -1; }
+.catalog-row:not(:has(.catalog-years)) .row-heading { grid-column: 1 / -1; }
+.interactive-row {
+  --effect-active: 0;
+  cursor: pointer;
+  outline-offset: 6px;
+  transition: border-color 160ms ease;
+}
+.metric-detail { opacity: 0; visibility: hidden; transition: opacity 160ms ease; }
+.row-effects {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--effect-active);
+  transition: opacity 180ms ease;
+}
+.row-effects > span { position: absolute; pointer-events: none; }
+/* Exact employer colors are supplied by each row; unrelated work stays neutral. */
+.effect-spotlight {
+  --aurora-a: var(--brand-light-a, #6ba6ff30);
+  --aurora-b: var(--brand-light-b, #ef9cc326);
+  --aurora-border: var(--brand-light-border, #769bd547);
+  inset: 0 -12px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse 240px 170px at var(--row-x, 50%) var(--row-y, 50%), var(--aurora-a), transparent 85%), radial-gradient(ellipse 180px 130px at calc(100% - var(--row-x, 50%)) 100%, var(--aurora-b), transparent);
+  box-shadow: inset 0 0 0 1px var(--aurora-border);
+}
+.dark .effect-spotlight {
+  --aurora-a: var(--brand-dark-a, #6ba6ff40);
+  --aurora-b: var(--brand-dark-b, #ef9cc329);
+  --aurora-border: var(--brand-dark-border, #769bd559);
+}
+.effect-dots {
+  inset: 0 -12px;
+  border-radius: 10px;
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 30%, transparent) 0.7px, transparent 0.8px);
+  background-size: 9px 9px;
+  mask-image: radial-gradient(ellipse 190px 130px at var(--row-x, 50%) var(--row-y, 50%), #0008, transparent);
+}
+.interactive-row:focus-visible { --effect-active: 1; border-top-color: transparent; }
+.interactive-row:focus-visible .text-muted-foreground { color: var(--foreground); }
+.interactive-row:focus-visible .row-cue { opacity: 1; color: var(--foreground); transform: translateX(2px); }
+.interactive-row:focus-visible .metric-detail { opacity: 1; visibility: visible; }
+@media (max-width: 420px) {
+  .catalog-row { column-gap: 0.75rem; }
+  .row-heading { gap: 0.5rem; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .interactive-row:hover { --effect-active: 1; border-top-color: transparent; }
+  .interactive-row:hover .text-muted-foreground { color: var(--foreground); }
+  .interactive-row:hover .row-cue { opacity: 1; color: var(--foreground); transform: translateX(2px); }
+  .interactive-row:hover .metric-detail { opacity: 1; visibility: visible; }
+}
+@media (hover: none), (pointer: coarse) {
+  .metric-detail { opacity: 1; visibility: visible; }
+  .row-cue { opacity: 0.8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .interactive-row { --row-x: 50% !important; --row-y: 50% !important; }
+  .row-effects, .row-effects *, .interactive-row .row-cue {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
