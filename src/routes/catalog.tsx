@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { catalog, sidequests } from "@/content/site";
 import { Reveal } from "@/components/reveal";
-import { SoundAnchor, SoundLink } from "@/components/sound-link";
+import { SoundLink } from "@/components/sound-link";
+import { brandIdentity } from "@/lib/brand-palettes";
+import { CatalogRow } from "@/components/project-row";
 import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
 import { canonicalRobotsMeta } from "@/lib/robots";
 
@@ -48,7 +50,7 @@ function CatalogPage() {
       </Reveal>
 
       {catalog.map((group, gi) => (
-        <section key={group.company} className="mt-16">
+        <section key={group.company} id={`brand-${brandIdentity(group.company)}`} className="mt-16">
           <Reveal delay={gi * 0.03}>
             <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               {group.company}
@@ -57,28 +59,14 @@ function CatalogPage() {
           <ul className="mt-5">
             {group.items.map((item, i) => {
               return (
-                <Reveal as="li" key={item.title} delay={i * 0.03} className="rule-row py-4">
-                  <div className="flex items-baseline justify-between gap-6">
-                    <span className="text-[16px] leading-snug">
-                      {item.slug ? (
-                        <SoundLink
-                          to="/work/$slug"
-                          params={{ slug: item.slug }}
-                          className="catalog-case-link"
-                        >
-                          {item.title}
-                        </SoundLink>
-                      ) : (
-                        item.title
-                      )}
-                    </span>
-                    <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-                      {item.years}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
-                    {item.note}
-                  </p>
+                <Reveal as="li" key={item.title} delay={i * 0.03}>
+                  <CatalogRow
+                    company={group.company}
+                    title={item.title}
+                    years={item.years}
+                    note={item.note}
+                    {...(item.slug ? { slug: item.slug } : {})}
+                  />
                 </Reveal>
               );
             })}
@@ -97,19 +85,12 @@ function CatalogPage() {
         </Reveal>
         <ul className="mt-5">
           {sidequests.map((item, i) => (
-            <Reveal as="li" key={item.title} delay={i * 0.03} className="rule-row py-4">
-              <div className="text-[16px] leading-snug">
-                {item.url ? (
-                  <SoundAnchor href={item.url} className="catalog-case-link">
-                    {item.title}
-                  </SoundAnchor>
-                ) : (
-                  item.title
-                )}
-              </div>
-              <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
-                {item.description}
-              </p>
+            <Reveal as="li" key={item.title} delay={i * 0.03}>
+              <CatalogRow
+                title={item.title}
+                note={item.description}
+                {...(item.url ? { url: item.url } : {})}
+              />
             </Reveal>
           ))}
         </ul>
