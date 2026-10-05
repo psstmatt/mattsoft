@@ -1,4 +1,3 @@
-import { brandIdentity, brandVariables } from "@/lib/brand-palettes";
 import type { CaseStudy } from "@/content/site";
 import { SoundAnchor, SoundLink } from "./sound-link";
 import { RowEffects } from "./row-effects";
@@ -11,8 +10,6 @@ export function ProjectRow({ project, index }: { project: CaseStudy; index: numb
       to="/work/$slug"
       params={{ slug: project.slug }}
       {...light}
-      data-brand={brandIdentity(project.company)}
-      style={brandVariables(project.company)}
       className="portfolio-row interactive-row project-row group no-underline"
     >
       <RowEffects />
@@ -46,14 +43,12 @@ export function CatalogRow({
   note,
   slug,
   url,
-  company,
 }: {
   title: string;
   years?: string;
   note: string;
   slug?: string;
   url?: string;
-  company?: string;
 }) {
   const light = useRowLight();
   const contents = (
@@ -75,14 +70,12 @@ export function CatalogRow({
       <p className="catalog-note text-[14px] leading-relaxed text-muted-foreground">{note}</p>
     </>
   );
-  const brand = { "data-brand": brandIdentity(company), style: brandVariables(company) };
   if (slug)
     return (
       <SoundLink
         to="/work/$slug"
         params={{ slug }}
         {...light}
-        {...brand}
         className="portfolio-row interactive-row catalog-row no-underline"
       >
         {contents}
@@ -93,15 +86,10 @@ export function CatalogRow({
       <SoundAnchor
         {...light}
         href={url}
-        {...brand}
         className="portfolio-row interactive-row catalog-row no-underline"
       >
         {contents}
       </SoundAnchor>
     );
-  return (
-    <div {...brand} className="portfolio-row catalog-row">
-      {contents}
-    </div>
-  );
+  return <div className="portfolio-row catalog-row">{contents}</div>;
 }
