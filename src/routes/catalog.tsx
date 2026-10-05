@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { catalog, sidequests } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { SoundLink } from "@/components/sound-link";
-import { brandIdentity } from "@/lib/brand-palettes";
 import { CatalogRow } from "@/components/project-row";
 import { canonicalLink, canonicalUrl } from "@/lib/site-metadata";
 import { canonicalRobotsMeta } from "@/lib/robots";
@@ -50,7 +49,11 @@ function CatalogPage() {
       </Reveal>
 
       {catalog.map((group, gi) => (
-        <section key={group.company} id={`brand-${brandIdentity(group.company)}`} className="mt-16">
+        <section
+          key={group.company}
+          id={`brand-${group.company.split(" / ")[0]!.toLowerCase()}`}
+          className="mt-16"
+        >
           <Reveal delay={gi * 0.03}>
             <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               {group.company}
@@ -61,7 +64,6 @@ function CatalogPage() {
               return (
                 <Reveal as="li" key={item.title} delay={i * 0.03}>
                   <CatalogRow
-                    company={group.company}
                     title={item.title}
                     years={item.years}
                     note={item.note}
