@@ -31,11 +31,15 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
       return this.context;
     }
     setAttribute() {}
+    getBoundingClientRect() {
+      return { left: 0, top: 0, width: 390, height: 844 };
+    }
     remove() {
       this.removed = true;
     }
   }
   class Context {
+    draws = [];
     globalAlpha = 1;
     globalCompositeOperation = "source-over";
     constructor(canvas) {
@@ -65,6 +69,7 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
       rasters.push(image.data.slice());
     }
     drawImage(source, ...args) {
+      this.draws.push(args);
       const [dx, dy, dw = source.width, dh = source.height] = args;
       const pixels = this.ensure(),
         src = source.pixels;
@@ -341,6 +346,45 @@ describe("prepared preview motion", () => {
       test.restore();
     }
   });
+  for (const kind of ["scout", "references"]) {
+    it(`animates ${kind} into its screen before the fitted destination handoff`, async () => {
+      const test = previewEnvironment();
+      test.element.dataset.kind = kind;
+      test.install();
+      let scene;
+      try {
+        scene = await mountCanvasComputer(test.element, new AbortController().signal);
+        const visible = test.stage.canvas;
+        let finished = false;
+        const entry = scene.enter({ style: {} }).then(() => {
+          finished = true;
+        });
+        const firstSize = visible.context.draws.at(-1)[2];
+        expect(visible.style.position).toBe("fixed");
+        expect(test.created).toContain(visible);
+        test.advance(350);
+        await Promise.resolve();
+        expect(visible.context.draws.at(-1)[2]).toBeGreaterThan(firstSize);
+        expect(finished).toBe(false);
+        expect(test.created).toHaveLength(1); // No full-page plate replacing the zoom.
+        test.advance(700);
+        await Promise.resolve();
+        expect(test.created).toHaveLength(2);
+        const plate = test.created.at(-1);
+        expect(plate.style.opacity).toBe("0");
+        test.advance(810);
+        expect(Number(plate.style.opacity)).toBeCloseTo(0.5, 5);
+        expect(finished).toBe(false);
+        test.advance(920);
+        await entry;
+        expect(finished).toBe(true);
+        expect(plate.style.opacity).toBe("1");
+      } finally {
+        scene?.dispose();
+        test.restore();
+      }
+    });
+  }
   it("fits the complete external preview width during portrait handoff", async () => {
     const test = previewEnvironment({ reducedMotion: true });
     const calls = [];

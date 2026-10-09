@@ -72,8 +72,8 @@ const destinations = [
   },
 ] as const;
 const paths = {
-  computer: "/experience/konami-computer-scene.js?v=ship-1",
-  canvas: "/experience/konami-canvas-scene.js?v=ship-1",
+  computer: "/experience/konami-computer-scene.js?v=ship-2",
+  canvas: "/experience/konami-canvas-scene.js?v=ship-2",
   material: "/experience/computer-material.js?v=2",
   transition: "/experience/computer-transition.js?v=1",
 };
@@ -305,6 +305,10 @@ export function SecretComputerDeck({
   const enter = useCallback(
     async (index = activeRef.current, skip = false) => {
       if (busy.current || !alive.current || (!state.current.unlocked && index !== 0)) return;
+      if (!skip && !scenes.current[index]) {
+        setAnnouncement("The computer is still loading. Skip intro is available.");
+        return;
+      }
       busy.current = true;
       setEntering(true);
       clearTimeout(previewTimer.current);
@@ -533,7 +537,7 @@ export function SecretComputerDeck({
                 className="computer-screen-hit"
                 data-computer-enter
                 tabIndex={index === active ? 0 : -1}
-                disabled={entering}
+                disabled={entering || !scenes.current[index]}
                 aria-label={`${code.unlocked && index !== active ? "Select" : "Enter"} ${destination.label}`}
                 aria-current={index === active ? "true" : undefined}
                 onClick={() => {
