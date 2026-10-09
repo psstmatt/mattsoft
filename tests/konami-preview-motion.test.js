@@ -95,6 +95,8 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
     }
     fillRect() {}
     setTransform() {}
+    transform() {}
+    clip() {}
     save() {}
     restore() {
       this.globalCompositeOperation = "source-over";

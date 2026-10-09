@@ -1,4 +1,5 @@
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
+import { fittedPageFrame, paintProjectedPage } from "./konami-page-projection.js?v=1";
 import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=1";
 import { applyComputerLayout } from "./konami-layout.js";
 import { awaitCaptureReady } from "./computer-snapshot.js";
@@ -412,7 +413,10 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
             // Reuse the prepared raster; only resample the scroll on a 20fps
             // cadence while it returns to the top. Frame scaling is one draw.
             const now = performance.now();
-            if (progress === 0 || progress === 1 || now - lastSample >= 50) {
+            if (
+              progress === 0 ||
+              (kind === "portfolio" && (progress === 1 || now - lastSample >= 50))
+            ) {
               rebuild(
                 stageWidth,
                 kind === "portfolio"
@@ -431,7 +435,22 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, viewport.width, viewport.height);
             ctx.globalAlpha = 1;
-            ctx.drawImage(screen, pose.x, pose.y, pose.s, pose.s);
+            if (kind !== "portfolio" && progress > 0) {
+              const quad = meta.frame.screenQuad.map(([x, y]) => [
+                pose.x + (x / meta.width) * pose.s,
+                pose.y + (y / meta.width) * pose.s,
+              ]);
+              const frame = fittedPageFrame(
+                quad,
+                page,
+                viewport.width,
+                viewport.height,
+                previewSampleHeight(page, true, stageHeight),
+                scrollStart,
+                progress,
+              );
+              paintProjectedPage(ctx, page, frame.quad, frame.sample);
+            } else ctx.drawImage(screen, pose.x, pose.y, pose.s, pose.s);
             ctx.globalCompositeOperation = "screen";
             ctx.globalAlpha = 0.16 * (1 - progress);
             ctx.drawImage(reflection, pose.x, pose.y, pose.s, pose.s);
