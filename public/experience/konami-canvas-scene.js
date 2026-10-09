@@ -1,6 +1,6 @@
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
-import { fittedPageFrame, paintProjectedPage } from "./konami-page-projection.js?v=1";
-import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=2";
+import { fittedPortfolioFrame, paintPortfolioFrame } from "./konami-page-projection.js?v=33";
+import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=33";
 import { applyComputerLayout } from "./konami-layout.js";
 import { awaitCaptureReady } from "./computer-snapshot.js";
 import { greenPlastic } from "./computer-material.js";
@@ -12,12 +12,11 @@ import {
   fitInflatableGlass,
 } from "./inflatable-registration.js";
 import {
-  fadeCanvasToPreview,
   fadeToPortfolio,
   portfolioPageBox,
   previewScroll,
   createPreviewTimeline,
-} from "./konami-transition.js?v=31";
+} from "./konami-transition.js?v=33";
 
 const ROOT = "/experience/models/ivory-classic/frames/";
 export function portfolioCasePixel(red, green, blue, alpha, u, v, dark = false) {
@@ -85,11 +84,19 @@ export function portfolioRasterSample(bounds, width, height, page, scroll = 0) {
   ];
 }
 
-export async function mountCanvasComputer(element, signal, { initiallyVisible = true } = {}) {
+export async function mountCanvasComputer(
+  element,
+  signal,
+  { initiallyVisible = true, entryMotion = "standard" } = {},
+) {
   const stage = element.querySelector("[data-computer-stage]");
   const button = element.querySelector("[data-computer-enter]");
   const kind = element.dataset.kind || "portfolio";
   const inflatable = kind === "scout";
+  const characterEntry =
+    kind !== "portfolio" && ["tactile", "portal", "absurd"].includes(entryMotion)
+      ? await import("./konami-character-entry.js?v=38")
+      : null;
   if (!stage || !button) throw new Error("Computer stage or entry button missing");
   if (!["portfolio", "scout", "references"].includes(kind))
     throw new Error("Unknown computer destination");
@@ -105,12 +112,13 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
     resize,
     animationFrame = 0,
     lastPaint = 0,
-    lastScroll = -1;
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)"),
+    lastScroll = -1,
+    entryController,
+    entryTask,
     previewTimeline = createPreviewTimeline();
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   let layout,
     canvas,
-    plate,
     overlay,
     page,
     meta,
@@ -129,12 +137,12 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
     disposed = true;
     cancelAnimationFrame(animationFrame);
     previewTimeline.setRunning(false, performance.now());
+    entryController?.abort(new DOMException("Computer disposed", "AbortError"));
     local.abort();
     signal?.removeEventListener("abort", abort);
     resize?.disconnect();
     themeObserver?.disconnect();
     canvas?.remove();
-    plate?.remove();
     for (const image of images) image.src = "";
   };
   s.addEventListener("abort", dispose, { once: true });
@@ -175,6 +183,8 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
       coverage = body;
     }
     if (kind === "portfolio") {
+      page.cssLeft =
+        document.querySelector("[data-portfolio-surface]")?.getBoundingClientRect().left ?? 0;
       function preparePortfolioBody(dark) {
         const prepared = document.createElement("canvas");
         prepared.width = body.naturalWidth;
@@ -207,6 +217,7 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
     canvas = document.createElement("canvas");
     canvas.className = "computer-canvas-fallback";
     canvas.style.visibility = visible ? "visible" : "hidden";
+    const idleCanvasStyle = canvas.style.cssText;
     canvas.setAttribute("aria-hidden", "true");
     stage.append(canvas);
     const make = () => {
@@ -368,6 +379,25 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
     return {
       canvas,
       dispose,
+      async resetEntry() {
+        if (!characterEntry || disposed) return;
+        entryController?.abort(new DOMException("Replay or cancellation", "AbortError"));
+        // Wait until the interrupted renderer has removed its viewport overlay
+        // before restoring this same prepared canvas to the selected card.
+        await entryTask?.catch(() => {});
+        if (disposed) return;
+        entryController = null;
+        entryTask = null;
+        stage.append(canvas);
+        canvas.style.cssText = idleCanvasStyle;
+        button.style.pointerEvents = "";
+        entering = false;
+        previewTimeline = createPreviewTimeline();
+        lastScroll = -1;
+        overlay = page;
+        dirty = true;
+        resume();
+      },
       setActive(value) {
         if (disposed || entering || active === !!value) return;
         active = !!value;
@@ -400,7 +430,39 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
         const scrollStart = Math.max(0, lastScroll),
           stageWidth = stage.clientWidth,
           stageHeight = stage.clientHeight;
-        let lastSample = -Infinity;
+        if (characterEntry) {
+          const controller = new AbortController();
+          entryController = controller;
+          const abortEntry = () => controller.abort(s.reason);
+          s.addEventListener("abort", abortEntry, { once: true });
+          if (s.aborted) abortEntry();
+          entryTask = characterEntry.playCharacterEntry({
+            canvas,
+            body,
+            coverage,
+            glass: reflection,
+            page,
+            meta,
+            pose: { x: layout.x, y: layout.y, s: layout.size },
+            width: stageWidth,
+            height: stageHeight,
+            kind,
+            style: entryMotion,
+            scrollStart,
+            signal: controller.signal,
+          });
+          try {
+            await entryTask;
+          } finally {
+            s.removeEventListener("abort", abortEntry);
+          }
+          return;
+        }
+        const sampleStart =
+          kind === "portfolio"
+            ? portfolioRasterSample(bounds, stageWidth, stageHeight, page)
+            : [0, 0, 1, previewSampleHeight(page, true, stageHeight)];
+        if (kind === "portfolio") window.scrollTo({ top: 0, behavior: "instant" });
         await zoomCanvasToScreen({
           canvas,
           pose: { x: layout.x, y: layout.y, s: layout.size },
@@ -410,21 +472,13 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
           external: kind !== "portfolio",
           signal: s,
           paint(pose, progress, viewport) {
-            // Reuse the prepared raster; only resample the scroll on a 20fps
-            // cadence while it returns to the top. Frame scaling is one draw.
-            const now = performance.now();
-            if (
-              progress === 0 ||
-              (kind === "portfolio" && (progress === 1 || now - lastSample >= 50))
-            ) {
-              rebuild(
-                stageWidth,
-                kind === "portfolio"
-                  ? stageHeight + (viewport.height - stageHeight) * progress
-                  : stageHeight,
-                scrollStart * Math.max(0, 1 - progress / 0.38),
-              );
-              lastSample = now;
+            if (kind !== "portfolio" && progress === 1) {
+              // Safari may finish with different toolbar or orientation bounds.
+              // The flat endpoint can use the latest viewport without changing
+              // the pose or sampling of any preceding animation frame.
+              viewport = { width: innerWidth, height: innerHeight };
+              canvas.style.width = `${viewport.width}px`;
+              canvas.style.height = `${viewport.height}px`;
             }
             const dpr = Math.min(devicePixelRatio || 1, 2);
             if (canvas.width !== Math.round(viewport.width * dpr))
@@ -435,27 +489,62 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, viewport.width, viewport.height);
             ctx.globalAlpha = 1;
-            if (kind !== "portfolio" && progress > 0) {
-              const quad = meta.frame.screenQuad.map(([x, y]) => [
-                pose.x + (x / meta.width) * pose.s,
-                pose.y + (y / meta.width) * pose.s,
-              ]);
-              const frame = fittedPageFrame(
-                quad,
-                page,
-                viewport.width,
-                viewport.height,
-                previewSampleHeight(page, true, stageHeight),
-                scrollStart,
+            const caseAlpha = 1 - Math.min(1, Math.max(0, (progress - 0.2) / 0.45));
+            if (kind === "portfolio") {
+              const frame = fittedPortfolioFrame({
+                mesh: meta.frame.screenMesh,
+                topology: meta.topology,
+                sourceSize: meta.width,
+                pose,
+                source: page,
+                viewport,
+                sampleStart,
+                sampleEnd: portfolioRasterSample(bounds, viewport.width, viewport.height, page),
+                scroll: scrollStart,
                 progress,
-              );
-              paintProjectedPage(ctx, page, frame.quad, frame.sample);
-            } else ctx.drawImage(screen, pose.x, pose.y, pose.s, pose.s);
+              });
+              paintPortfolioFrame(ctx, page, frame, meta.topology);
+              if (caseAlpha > 0) {
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.globalAlpha = caseAlpha;
+                ctx.drawImage(coverage, pose.x, pose.y, pose.s, pose.s);
+                ctx.globalCompositeOperation = "source-over";
+                ctx.globalAlpha = 1;
+              }
+            } else {
+              const frame = fittedPortfolioFrame({
+                mesh: meta.frame.screenMesh,
+                topology: meta.topology,
+                sourceSize: meta.width,
+                pose,
+                source: page,
+                viewport,
+                sampleStart,
+                sampleEnd: [
+                  0,
+                  0,
+                  1,
+                  (viewport.height * page.width) / (viewport.width * page.height),
+                ],
+                scroll: scrollStart,
+                progress,
+                displayWidth: viewport.width,
+                displayLeft: 0,
+              });
+              paintPortfolioFrame(ctx, page, frame, meta.topology);
+              if (caseAlpha > 0) {
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.globalAlpha = caseAlpha;
+                ctx.drawImage(coverage, pose.x, pose.y, pose.s, pose.s);
+                ctx.globalCompositeOperation = "source-over";
+                ctx.globalAlpha = 1;
+              }
+            }
             ctx.globalCompositeOperation = "screen";
             ctx.globalAlpha = 0.16 * (1 - progress);
             ctx.drawImage(reflection, pose.x, pose.y, pose.s, pose.s);
             ctx.globalCompositeOperation = "source-over";
-            ctx.globalAlpha = 1 - Math.min(1, Math.max(0, (progress - 0.2) / 0.45));
+            ctx.globalAlpha = caseAlpha;
             ctx.drawImage(
               darkBody && document.documentElement.classList.contains("dark") ? darkBody : body,
               pose.x,
@@ -470,7 +559,8 @@ export async function mountCanvasComputer(element, signal, { initiallyVisible = 
           await fadeToPortfolio(canvas, surface, s);
           return;
         }
-        plate = await fadeCanvasToPreview(canvas, page, s);
+        // The primary canvas already contains the exact width-fitted capture.
+        // Keep it visible while the caller navigates to the external destination.
       },
     };
   } catch (error) {

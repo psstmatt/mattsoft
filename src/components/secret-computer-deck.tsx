@@ -28,12 +28,17 @@ type InputScreen = {
 };
 type Scene = {
   enter: (surface?: HTMLElement) => Promise<void>;
+  resetEntry?: () => Promise<void>;
   dispose: () => void;
   setInput?: (input: InputScreen) => void;
   setVisible?: (visible: boolean) => void;
   setActive?: (active: boolean) => void;
 };
-type SceneOptions = { material?: "inflatable"; initiallyVisible?: boolean };
+type SceneOptions = {
+  material?: "inflatable";
+  initiallyVisible?: boolean;
+  entryMotion?: "absurd";
+};
 type SceneModule = {
   mountComputer: (
     element: HTMLElement,
@@ -72,8 +77,8 @@ const destinations = [
   },
 ] as const;
 const paths = {
-  computer: "/experience/konami-computer-scene.js?v=ship-4",
-  canvas: "/experience/konami-canvas-scene.js?v=ship-4",
+  computer: "/experience/konami-computer-scene.js?v=ship-absurd-1",
+  canvas: "/experience/konami-canvas-scene.js?v=ship-absurd-1",
   material: "/experience/computer-material.js?v=2",
   transition: "/experience/computer-transition.js?v=1",
 };
@@ -88,6 +93,7 @@ export function SecretComputerDeck({
   const { play, stop, konamiFeedback, konamiUnlock } = useSound();
   const material = "inflatable";
   const labelStyle = "wild-plus";
+  const entryMotion = "absurd";
   const reduced = useReducedMotion();
   const dialog = useRef<HTMLElement>(null);
   const cards = useRef<(HTMLElement | null)[]>([]);
@@ -101,10 +107,11 @@ export function SecretComputerDeck({
   } | null>(null);
   const controllers = useRef<(AbortController | null)[]>([null, null, null]);
   const alive = useRef(false);
-  const upgraded = useRef([false, false, false]);
-  const upgrading = useRef([false, false, false]);
-  const [readyCount, setReadyCount] = useState(0);
+  const [, setReadyCount] = useState(0);
   const busy = useRef(false);
+  const entryAttempt = useRef(0);
+  const restoring = useRef(false);
+  const restoreFocus = useRef(false);
   const state = useRef(createKonamiState("keyboard"));
   const preview = useRef(false);
   const lastMove = useRef("");
@@ -119,6 +126,38 @@ export function SecretComputerDeck({
   const [active, setActive] = useState(0);
   const [entering, setEntering] = useState(false);
   const [announcement, setAnnouncement] = useState("");
+
+  const cancelEntry = useCallback(async () => {
+    if (restoring.current || activeRef.current === 0) return;
+    const scene = scenes.current[activeRef.current];
+    if (!scene?.resetEntry) return;
+    restoring.current = true;
+    ++entryAttempt.current;
+    stop();
+    try {
+      await scene.resetEntry();
+      if (!alive.current) return;
+      const card = cards.current[activeRef.current];
+      if (card) delete card.dataset["entering"];
+      busy.current = false;
+      suppressClickUntil.current = 0;
+      origin.current = null;
+      restoreFocus.current = true;
+      setEntering(false);
+      setAnnouncement(`${destinations[activeRef.current]?.label} ready to enter.`);
+    } finally {
+      restoring.current = false;
+    }
+  }, [stop]);
+
+  useEffect(() => {
+    if (!entering && restoreFocus.current) {
+      restoreFocus.current = false;
+      cards.current[activeRef.current]
+        ?.querySelector<HTMLButtonElement>("[data-computer-enter]")
+        ?.focus({ preventScroll: true });
+    }
+  }, [entering]);
 
   const updateScreens = useCallback(() => {
     const input: InputScreen = {
@@ -164,9 +203,8 @@ export function SecretComputerDeck({
         if (index !== 0) {
           const module: CanvasModule = await import(/* @vite-ignore */ paths.canvas);
           if (signal.aborted) return;
-          instance = await module.mountCanvasComputer(card, signal, { material });
+          instance = await module.mountCanvasComputer(card, signal, { material, entryMotion });
         } else {
-          upgraded.current[index] = true;
           const module: SceneModule = await import(/* @vite-ignore */ paths.computer);
           if (signal.aborted) return;
           instance = await module.mountComputer(card, signal);
@@ -176,14 +214,16 @@ export function SecretComputerDeck({
           try {
             const module: CanvasModule = await import(/* @vite-ignore */ paths.canvas);
             if (!signal.aborted)
-              instance = await module.mountCanvasComputer(card, signal, { material });
+              instance = await module.mountCanvasComputer(card, signal, { material, entryMotion });
           } catch {
             if (!signal.aborted) card.dataset["fallback"] = "true";
           }
         }
       }
       if (!instance) return;
-      if (signal.aborted || !alive.current || busy.current) instance.dispose();
+      // Retain a neighboring machine that finishes loading during entry so
+      // cancelling leaves it prepared instead of stranding its controller.
+      if (signal.aborted || !alive.current) instance.dispose();
       else {
         scenes.current[index] = instance;
         instance.setActive?.(index === activeRef.current);
@@ -191,62 +231,7 @@ export function SecretComputerDeck({
         setReadyCount((count) => count + 1);
       }
     },
-    [updateScreens, material],
-  );
-
-  const upgrade = useCallback(
-    async (index: number) => {
-      const card = cards.current[index];
-      const controller = controllers.current[index];
-      if (
-        !card ||
-        !controller ||
-        !scenes.current[index] ||
-        upgraded.current[index] ||
-        upgrading.current[index] ||
-        busy.current
-      )
-        return;
-      // The green scene already probes WebGL. Rebuilding every prepared Canvas
-      // after that probe fails duplicates material work and restarts its scroll.
-      // The generated inflatable has one registered pose. Keep its prepared
-      // canvas rather than morph it through unrelated hard-shell angle frames.
-      if (index === 1 && material === "inflatable") {
-        upgraded.current[index] = true;
-        return;
-      }
-      const initialMode = cards.current[0]?.dataset["renderMode"];
-      if (!initialMode) return;
-      if (initialMode === "canvas") {
-        upgraded.current[index] = true;
-        return;
-      }
-      upgrading.current[index] = true;
-      const { signal } = controller;
-      let candidate: Scene | null = null;
-      try {
-        const options: SceneOptions = { material, initiallyVisible: false };
-        const module: SceneModule = await import(/* @vite-ignore */ paths.computer);
-        if (!signal.aborted) candidate = await module.mountComputer(card, signal, options);
-        if (candidate) {
-          if (signal.aborted || !alive.current || busy.current) candidate.dispose();
-          else {
-            const previous = scenes.current[index];
-            scenes.current[index] = candidate;
-            updateScreens();
-            candidate.setActive?.(activeRef.current === index);
-            candidate.setVisible?.(true);
-            previous?.dispose();
-          }
-        }
-      } catch {
-        // Keep the ready Canvas scene when WebGL is unavailable.
-      } finally {
-        upgraded.current[index] = true;
-        upgrading.current[index] = false;
-      }
-    },
-    [updateScreens, material],
+    [updateScreens, material, entryMotion],
   );
 
   const select = useCallback(
@@ -310,6 +295,11 @@ export function SecretComputerDeck({
         return;
       }
       busy.current = true;
+      const attempt = ++entryAttempt.current;
+      if (index !== 0) {
+        dialog.current?.focus({ preventScroll: true });
+        setAnnouncement(`Entering ${destinations[index]?.label}. Press Escape to return.`);
+      }
       setEntering(true);
       clearTimeout(previewTimer.current);
       animation.current?.cancel();
@@ -321,7 +311,7 @@ export function SecretComputerDeck({
       const card = cards.current[index];
       if (card) card.dataset["entering"] = "true";
       try {
-        if (!skip && !reduced) {
+        if (!skip && (!reduced || index !== 0)) {
           const scene = scenes.current[index];
           if (scene && surface.current) await scene.enter(surface.current);
           else if (index === 0 && dialog.current && surface.current) {
@@ -336,13 +326,19 @@ export function SecretComputerDeck({
       } catch (error) {
         if (!alive.current || (error instanceof DOMException && error.name === "AbortError"))
           return;
+        if (index !== 0) {
+          await cancelEntry();
+          if (alive.current)
+            setAnnouncement("The transition was interrupted. The computer is ready to try again.");
+          return;
+        }
       }
-      if (!alive.current) return;
+      if (!alive.current || attempt !== entryAttempt.current) return;
       const destination = destinations[index];
       if (index === 0 || skip) onComplete();
       else if (destination?.url) window.location.assign(destination.url);
     },
-    [onComplete, play, stop, reduced, surface, updateScreens],
+    [onComplete, play, stop, reduced, surface, updateScreens, cancelEntry],
   );
 
   useEffect(() => {
@@ -394,15 +390,13 @@ export function SecretComputerDeck({
     }
   }, [code.unlocked, mount]);
 
-  useEffect(() => {
-    if (code.unlocked && readyCount > 0) void upgrade(active);
-  }, [active, code.unlocked, readyCount, upgrade]);
-
   return (
     <section
       ref={dialog}
       className="portfolio-computer secret-computer-deck"
       data-label-style={labelStyle}
+      data-entry-motion={entryMotion}
+      data-external-entry={entering && active !== 0}
       data-unlocked={code.unlocked}
       data-entering={entering}
       role="dialog"
@@ -412,10 +406,15 @@ export function SecretComputerDeck({
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
-          void enter(0, true);
+          if (busy.current && activeRef.current !== 0) void cancelEntry();
+          else void enter(0, true);
           return;
         }
         if (event.key === "Tab") {
+          if (busy.current && activeRef.current !== 0) {
+            event.preventDefault();
+            return;
+          }
           const buttons = [
             ...(dialog.current?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ??
               []),
@@ -461,6 +460,9 @@ export function SecretComputerDeck({
       onPointerDown={(event) => {
         if (!(event.target instanceof Element) || !event.target.closest(".secret-computer-card"))
           return;
+        // Suppress only the click from the drag that just ended. A new
+        // physical press is a fresh intention, including an immediate tap.
+        if (activeRef.current !== 0) suppressClickUntil.current = 0;
         origin.current = {
           x: event.clientX,
           y: event.clientY,
