@@ -258,6 +258,10 @@ export async function fadeCanvasToPreview(canvas, source, signal, env = globalTh
     const dpr = Math.min(env.devicePixelRatio || 1, 2);
     plate.width = Math.round(env.innerWidth * dpr);
     plate.height = Math.round(env.innerHeight * dpr);
+    // Match the promoted canvas even when a stable scrollbar gutter narrows
+    // the document's percentage-width containing block.
+    plate.style.width = `${env.innerWidth}px`;
+    plate.style.height = `${env.innerHeight}px`;
     ctx.fillStyle = pixel ? `rgb(${pixel[0]},${pixel[1]},${pixel[2]})` : "#0d0c0a";
     ctx.fillRect(0, 0, plate.width, plate.height);
     // A cross-origin desktop capture is a preview, not a responsive destination.
@@ -268,8 +272,8 @@ export async function fadeCanvasToPreview(canvas, source, signal, env = globalTh
   Object.assign(plate.style, {
     position: "fixed",
     inset: "0",
-    width: "100%",
-    height: "100%",
+    width: `${env.innerWidth}px`,
+    height: `${env.innerHeight}px`,
     zIndex: "1002",
     opacity: "0",
     pointerEvents: "none",

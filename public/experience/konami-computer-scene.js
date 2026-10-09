@@ -1,6 +1,6 @@
 // Selected shared camera, glass and pointer renderer. Portfolio keeps its live page sampling.
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
-import { entryFittedTarget } from "./konami-canvas-entry.js?v=1";
+import { entryFittedTarget } from "./konami-canvas-entry.js?v=2";
 import { applyComputerLayout, allowsComputerCameraMotion } from "./konami-layout.js";
 import {
   previewScroll,
@@ -13,7 +13,7 @@ import {
   entryPortfolioTarget,
   fadeCanvasToPreview,
   ZOOM_MS,
-} from "./konami-transition.js?v=29";
+} from "./konami-transition.js?v=31";
 const Tt = "/experience/models/ivory-classic/";
 const kt = 12,
   Gt = ZOOM_MS,
@@ -234,7 +234,7 @@ async function lo(p, s, options = {}) {
   // Inflatable Scout has one measured pose and its own aperture. It must never
   // request the retired acrylic angle bank, including direct runtime callers.
   if (kind === "scout") {
-    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-3");
+    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
     return mountCanvasComputer(p, s, options);
   }
   const external = kind !== "portfolio";
@@ -1155,7 +1155,7 @@ export async function mountComputer(element, parentSignal, options = {}) {
     controller.abort();
     parentSignal?.removeEventListener("abort", abort);
     if (error.message === "WebGL2 unavailable" && !parentSignal?.aborted) {
-      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-3");
+      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
       return mountCanvasComputer(element, parentSignal, options);
     }
     throw error;

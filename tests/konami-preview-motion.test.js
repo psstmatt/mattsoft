@@ -416,6 +416,8 @@ describe("prepared preview motion", () => {
     await fadeCanvasToPreview({}, source, undefined, env);
     expect(calls.at(-1)).toEqual([source, 0, 0, 390, (2168 * 390) / 1188]);
     expect(plate.style.opacity).toBe("1");
+    expect(plate.style.width).toBe("390px");
+    expect(plate.style.height).toBe("844px");
     expect(plate.style.transform).toBeUndefined();
   });
 });

@@ -72,8 +72,8 @@ const destinations = [
   },
 ] as const;
 const paths = {
-  computer: "/experience/konami-computer-scene.js?v=ship-3",
-  canvas: "/experience/konami-canvas-scene.js?v=ship-3",
+  computer: "/experience/konami-computer-scene.js?v=ship-4",
+  canvas: "/experience/konami-canvas-scene.js?v=ship-4",
   material: "/experience/computer-material.js?v=2",
   transition: "/experience/computer-transition.js?v=1",
 };

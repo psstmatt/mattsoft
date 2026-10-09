@@ -1,6 +1,6 @@
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
 import { fittedPageFrame, paintProjectedPage } from "./konami-page-projection.js?v=1";
-import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=1";
+import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=2";
 import { applyComputerLayout } from "./konami-layout.js";
 import { awaitCaptureReady } from "./computer-snapshot.js";
 import { greenPlastic } from "./computer-material.js";
@@ -17,7 +17,7 @@ import {
   portfolioPageBox,
   previewScroll,
   createPreviewTimeline,
-} from "./konami-transition.js?v=29";
+} from "./konami-transition.js?v=31";
 
 const ROOT = "/experience/models/ivory-classic/frames/";
 export function portfolioCasePixel(red, green, blue, alpha, u, v, dark = false) {

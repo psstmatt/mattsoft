@@ -3,7 +3,7 @@ import {
   entryPortfolioTarget,
   runEntryTransition,
   ZOOM_MS,
-} from "./konami-transition.js?v=29";
+} from "./konami-transition.js?v=31";
 
 // Fit the complete CRT width. Cover-by-height would crop portrait destinations.
 export function entryFittedTarget(bounds, width) {
