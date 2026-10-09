@@ -1,4 +1,6 @@
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
+import { fittedPageFrame, paintProjectedPage } from "./konami-page-projection.js?v=1";
+import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=2";
 import { applyComputerLayout } from "./konami-layout.js";
 import { awaitCaptureReady } from "./computer-snapshot.js";
 import { greenPlastic } from "./computer-material.js";
@@ -15,7 +17,7 @@ import {
   portfolioPageBox,
   previewScroll,
   createPreviewTimeline,
-} from "./konami-transition.js?v=24";
+} from "./konami-transition.js?v=31";
 
 const ROOT = "/experience/models/ivory-classic/frames/";
 export function portfolioCasePixel(red, green, blue, alpha, u, v, dark = false) {
@@ -83,11 +85,7 @@ export function portfolioRasterSample(bounds, width, height, page, scroll = 0) {
   ];
 }
 
-export async function mountCanvasComputer(
-  element,
-  signal,
-  { initiallyVisible = true } = {},
-) {
+export async function mountCanvasComputer(element, signal, { initiallyVisible = true } = {}) {
   const stage = element.querySelector("[data-computer-stage]");
   const button = element.querySelector("[data-computer-enter]");
   const kind = element.dataset.kind || "portfolio";
@@ -154,8 +152,8 @@ export async function mountCanvasComputer(
     const caseFile = inflatable
       ? INFLATABLE_ASSET
       : kind === "references"
-          ? "/experience/models/references-chrome-baked/frames/case-1-9.webp"
-          : ROOT + "case-1-9.webp";
+        ? "/experience/models/references-chrome-baked/frames/case-1-9.webp"
+        : ROOT + "case-1-9.webp";
     const response = await awaitCaptureReady(
       fetch("/experience/shared-screen-center.json", { signal: s }),
       s,
@@ -399,8 +397,77 @@ export async function mountCanvasComputer(
         animationFrame = 0;
         previewTimeline.setRunning(false, performance.now());
         button.style.pointerEvents = "none";
+        const scrollStart = Math.max(0, lastScroll),
+          stageWidth = stage.clientWidth,
+          stageHeight = stage.clientHeight;
+        let lastSample = -Infinity;
+        await zoomCanvasToScreen({
+          canvas,
+          pose: { x: layout.x, y: layout.y, s: layout.size },
+          width: stageWidth,
+          height: stageHeight,
+          bounds,
+          external: kind !== "portfolio",
+          signal: s,
+          paint(pose, progress, viewport) {
+            // Reuse the prepared raster; only resample the scroll on a 20fps
+            // cadence while it returns to the top. Frame scaling is one draw.
+            const now = performance.now();
+            if (
+              progress === 0 ||
+              (kind === "portfolio" && (progress === 1 || now - lastSample >= 50))
+            ) {
+              rebuild(
+                stageWidth,
+                kind === "portfolio"
+                  ? stageHeight + (viewport.height - stageHeight) * progress
+                  : stageHeight,
+                scrollStart * Math.max(0, 1 - progress / 0.38),
+              );
+              lastSample = now;
+            }
+            const dpr = Math.min(devicePixelRatio || 1, 2);
+            if (canvas.width !== Math.round(viewport.width * dpr))
+              canvas.width = Math.round(viewport.width * dpr);
+            if (canvas.height !== Math.round(viewport.height * dpr))
+              canvas.height = Math.round(viewport.height * dpr);
+            const ctx = canvas.getContext("2d");
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, viewport.width, viewport.height);
+            ctx.globalAlpha = 1;
+            if (kind !== "portfolio" && progress > 0) {
+              const quad = meta.frame.screenQuad.map(([x, y]) => [
+                pose.x + (x / meta.width) * pose.s,
+                pose.y + (y / meta.width) * pose.s,
+              ]);
+              const frame = fittedPageFrame(
+                quad,
+                page,
+                viewport.width,
+                viewport.height,
+                previewSampleHeight(page, true, stageHeight),
+                scrollStart,
+                progress,
+              );
+              paintProjectedPage(ctx, page, frame.quad, frame.sample);
+            } else ctx.drawImage(screen, pose.x, pose.y, pose.s, pose.s);
+            ctx.globalCompositeOperation = "screen";
+            ctx.globalAlpha = 0.16 * (1 - progress);
+            ctx.drawImage(reflection, pose.x, pose.y, pose.s, pose.s);
+            ctx.globalCompositeOperation = "source-over";
+            ctx.globalAlpha = 1 - Math.min(1, Math.max(0, (progress - 0.2) / 0.45));
+            ctx.drawImage(
+              darkBody && document.documentElement.classList.contains("dark") ? darkBody : body,
+              pose.x,
+              pose.y,
+              pose.s,
+              pose.s,
+            );
+            ctx.globalAlpha = 1;
+          },
+        });
         if (kind === "portfolio") {
-          await fadeToPortfolio(element, surface, s);
+          await fadeToPortfolio(canvas, surface, s);
           return;
         }
         plate = await fadeCanvasToPreview(canvas, page, s);

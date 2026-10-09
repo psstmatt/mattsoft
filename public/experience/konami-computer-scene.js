@@ -1,17 +1,19 @@
 // Selected shared camera, glass and pointer renderer. Portfolio keeps its live page sampling.
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
+import { entryFittedTarget } from "./konami-canvas-entry.js?v=2";
 import { applyComputerLayout, allowsComputerCameraMotion } from "./konami-layout.js";
 import {
   previewScroll,
   createPreviewTimeline,
   runEntryTransition,
+  isPortfolioSnapshotCompatible,
   fadeToPortfolio,
   promoteEntryCanvas,
   hasComplexEntryTransform,
   entryPortfolioTarget,
   fadeCanvasToPreview,
   ZOOM_MS,
-} from "./konami-transition.js?v=24";
+} from "./konami-transition.js?v=31";
 const Tt = "/experience/models/ivory-classic/";
 const kt = 12,
   Gt = ZOOM_MS,
@@ -232,7 +234,7 @@ async function lo(p, s, options = {}) {
   // Inflatable Scout has one measured pose and its own aperture. It must never
   // request the retired acrylic angle bank, including direct runtime callers.
   if (kind === "scout") {
-    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-1");
+    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
     return mountCanvasComputer(p, s, options);
   }
   const external = kind !== "portfolio";
@@ -387,11 +389,7 @@ async function lo(p, s, options = {}) {
         if (!n.ok) throw new Error(`Scout frame ${n.status}: ${r}-${t}`);
         return n.blob();
       });
-    const pair = await Promise.all([
-      o("case"),
-      o("glass"),
-      Promise.resolve(null),
-    ]);
+    const pair = await Promise.all([o("case"), o("glass"), Promise.resolve(null)]);
     if (!F && !s.aborted) Ge.set(t, pair);
   }
   async function at(t) {
@@ -634,7 +632,9 @@ async function lo(p, s, options = {}) {
       L = ce();
     Vt(ft);
     const z = xt(L),
-      _ = previewSampleHeight(Re, external, k),
+      previewHeight = previewSampleHeight(Re, external, k),
+      fittedHeight = (((L.y1 - L.y0) / (L.x1 - L.x0)) * Re.naturalWidth) / Re.naturalHeight,
+      _ = external && D ? previewHeight + (fittedHeight - previewHeight) * ft : previewHeight,
       te = D ? entryScroll : previewScroll(previewTimeline.elapsed(t), Math.max(0, 1 - _), n),
       y = c.map(st),
       { program: le, uniforms: v } = tt,
@@ -1074,7 +1074,14 @@ async function lo(p, s, options = {}) {
       async enter(t) {
         s.throwIfAborted();
         if (F || D) throw new Error("Computer entry unavailable");
-        const useFade = external || captureKey() !== snapshotKey || hasComplexEntryTransform(u);
+        const useFade =
+          (!external &&
+            !isPortfolioSnapshotCompatible(Re, {
+              width: innerWidth,
+              height: innerHeight,
+              themeDark: document.documentElement.classList.contains("dark"),
+            })) ||
+          hasComplexEntryTransform(u);
         const now = performance.now();
         const scrollStart = previewScroll(
           previewTimeline.elapsed(now),
@@ -1103,7 +1110,7 @@ async function lo(p, s, options = {}) {
         u.width = Math.round(U * Me);
         u.height = Math.round(k * Me);
         l = { ...from };
-        const to = entryPortfolioTarget(bounds, U, k);
+        const to = external ? entryFittedTarget(bounds, U) : entryPortfolioTarget(bounds, U, k);
         je(performance.now()); // Resizing clears WebGL: paint frame zero immediately.
         if (!external) window.scrollTo({ top: 0, behavior: "instant" });
         // The real DOM stays still and hidden until the texture reaches its exact
@@ -1129,6 +1136,7 @@ async function lo(p, s, options = {}) {
             je(performance.now());
           },
         });
+        if (external) entryPlate = await fadeCanvasToPreview(u, Re, s);
       },
     }
   );
@@ -1147,7 +1155,7 @@ export async function mountComputer(element, parentSignal, options = {}) {
     controller.abort();
     parentSignal?.removeEventListener("abort", abort);
     if (error.message === "WebGL2 unavailable" && !parentSignal?.aborted) {
-      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-1");
+      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
       return mountCanvasComputer(element, parentSignal, options);
     }
     throw error;

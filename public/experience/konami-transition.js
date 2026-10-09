@@ -23,18 +23,46 @@ export function createPreviewTimeline() {
     },
   };
 }
+// Safari's toolbar changes the visible height without changing page wrapping.
+// A tall capture remains valid as long as it covers the new visible viewport.
+export function isPortfolioSnapshotCompatible(capture, { width, height, themeDark }) {
+  if (
+    !capture ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0 ||
+    capture.viewportWidth !== width ||
+    capture.themeDark !== themeDark
+  )
+    return false;
+  const pixelWidth = capture.naturalWidth || capture.width,
+    pixelHeight = capture.naturalHeight || capture.height,
+    cssWidth = capture.cssWidth;
+  if (![pixelWidth, pixelHeight, cssWidth].every((value) => Number.isFinite(value) && value > 0))
+    return false;
+  return (pixelHeight * cssWidth) / pixelWidth >= height - 1;
+}
 // One owner for entry. Hiding the page settles it, never leaving a stopped RAF.
 export function runEntryTransition({ duration, frame, signal, env = globalThis }) {
   return new Promise((resolve, reject) => {
     let raf = 0,
       done = false,
       timer;
-    const start = env.performance.now();
+    const start = env.performance.now(),
+      viewportWidth = env.innerWidth,
+      layoutWidth = env.document.documentElement?.clientWidth,
+      orientation = env.screen?.orientation,
+      orientationType = orientation?.type,
+      orientationAngle = orientation?.angle,
+      legacyOrientation = env.orientation;
     function cleanup() {
       env.cancelAnimationFrame(raf);
       env.clearTimeout(timer);
       env.document.removeEventListener("visibilitychange", visibility);
       env.removeEventListener?.("resize", resized);
+      env.removeEventListener?.("orientationchange", orientationChanged);
+      orientation?.removeEventListener?.("change", orientationChanged);
       signal?.removeEventListener("abort", cancel);
     }
     function finish(renderLast = true) {
@@ -58,6 +86,21 @@ export function runEntryTransition({ duration, frame, signal, env = globalThis }
       if (env.document.hidden) finish();
     }
     function resized() {
+      // A mobile toolbar resize must not skip straight to the last zoom frame.
+      // Width/layout or orientation changes still invalidate the frozen pose.
+      if (
+        Number.isFinite(viewportWidth) &&
+        viewportWidth > 0 &&
+        env.innerWidth === viewportWidth &&
+        env.document.documentElement?.clientWidth === layoutWidth &&
+        orientation?.type === orientationType &&
+        orientation?.angle === orientationAngle &&
+        env.orientation === legacyOrientation
+      )
+        return;
+      finish();
+    }
+    function orientationChanged() {
       finish();
     }
     function tick(now) {
@@ -77,6 +120,8 @@ export function runEntryTransition({ duration, frame, signal, env = globalThis }
     if (signal?.aborted) return cancel();
     env.document.addEventListener("visibilitychange", visibility);
     env.addEventListener?.("resize", resized);
+    env.addEventListener?.("orientationchange", orientationChanged);
+    orientation?.addEventListener?.("change", orientationChanged);
     signal?.addEventListener("abort", cancel, { once: true });
     if (env.document.hidden || duration <= 0) return finish();
     timer = env.setTimeout(finish, duration + 1000);
@@ -116,7 +161,28 @@ export function hasComplexEntryTransform(canvas, env = globalThis) {
   for (let node = canvas; node && node !== env.document.body; node = node.parentElement) {
     const value = env.getComputedStyle(node).transform;
     if (!value || value === "none") continue;
-    if (value.startsWith("matrix3d")) return true;
+    if (value.startsWith("matrix3d")) {
+      const matrix = value
+        .match(/^matrix3d\(([^)]+)\)$/)?.[1]
+        .split(",")
+        .map(Number);
+      // Safari may serialize a compositor's plain translate/scale as matrix3d.
+      // Its displayed bounds still preserve the pose; rotated/perspective planes do not.
+      if (
+        !matrix ||
+        matrix.length !== 16 ||
+        !matrix.every(Number.isFinite) ||
+        [1, 2, 4, 6, 8, 9].some((index) => Math.abs(matrix[index]) > 0.000001) ||
+        [3, 7, 11].some((index) => Math.abs(matrix[index]) > 0.00000001) ||
+        matrix[0] <= 0 ||
+        matrix[5] <= 0 ||
+        matrix[10] <= 0 ||
+        Math.abs(matrix[0] - matrix[5]) > 0.000001 ||
+        Math.abs(matrix[15] - 1) > 0.00000001
+      )
+        return true;
+      continue;
+    }
     const a = value
       .match(/^matrix\(([^)]+)\)$/)?.[1]
       .split(",")
@@ -192,6 +258,10 @@ export async function fadeCanvasToPreview(canvas, source, signal, env = globalTh
     const dpr = Math.min(env.devicePixelRatio || 1, 2);
     plate.width = Math.round(env.innerWidth * dpr);
     plate.height = Math.round(env.innerHeight * dpr);
+    // Match the promoted canvas even when a stable scrollbar gutter narrows
+    // the document's percentage-width containing block.
+    plate.style.width = `${env.innerWidth}px`;
+    plate.style.height = `${env.innerHeight}px`;
     ctx.fillStyle = pixel ? `rgb(${pixel[0]},${pixel[1]},${pixel[2]})` : "#0d0c0a";
     ctx.fillRect(0, 0, plate.width, plate.height);
     // A cross-origin desktop capture is a preview, not a responsive destination.
@@ -202,8 +272,8 @@ export async function fadeCanvasToPreview(canvas, source, signal, env = globalTh
   Object.assign(plate.style, {
     position: "fixed",
     inset: "0",
-    width: "100%",
-    height: "100%",
+    width: `${env.innerWidth}px`,
+    height: `${env.innerHeight}px`,
     zIndex: "1002",
     opacity: "0",
     pointerEvents: "none",
