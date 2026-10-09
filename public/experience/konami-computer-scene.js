@@ -1,6 +1,12 @@
 // Selected shared camera, glass and pointer renderer. Portfolio keeps its live page sampling.
 import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
-import { entryFittedTarget } from "./konami-canvas-entry.js?v=2";
+import { entryFittedTarget } from "./konami-canvas-entry.js?v=33";
+import { entrySamplingViewport, alignPortfolioEntryTarget } from "./konami-entry-sampling.js?v=33";
+import {
+  externalEntryTarget,
+  externalEntrySample,
+  finishExternalViewport,
+} from "./konami-external-entry.js?v=33";
 import { applyComputerLayout, allowsComputerCameraMotion } from "./konami-layout.js";
 import {
   previewScroll,
@@ -13,7 +19,7 @@ import {
   entryPortfolioTarget,
   fadeCanvasToPreview,
   ZOOM_MS,
-} from "./konami-transition.js?v=31";
+} from "./konami-transition.js?v=33";
 const Tt = "/experience/models/ivory-classic/";
 const kt = 12,
   Gt = ZOOM_MS,
@@ -54,6 +60,7 @@ precision highp float;
 in vec2 vFrame; in vec2 vUV;
 uniform float uApertureCover;
 uniform bool uExternal;
+uniform vec3 uPageBackground;
 uniform sampler2D uSite, uG0, uG1, uG2, uG3, uCue, uK0, uK1, uK2, uK3;
 uniform vec3 uCueBox; // width, height (screen UV), burst 0..1
 uniform vec4 uW;
@@ -82,6 +89,12 @@ void main() {
   vec2 fringe = c * (uCrt * .0005 + uFlash * .0015);
   vec3 col = vec3(texture(uSite, st(uv + fringe)).r, texture(uSite, st(uv)).g, texture(uSite, st(uv - fringe)).b);
   vec3 glow = textureLod(uSite, st(uv), 4.).rgb;
+  if (uExternal) {
+    vec2 pageUv = st(uv);
+    float hasPage = step(0., pageUv.x) * step(pageUv.x, 1.) * step(0., pageUv.y) * step(pageUv.y, 1.);
+    col = mix(uPageBackground, col, hasPage);
+    glow = mix(uPageBackground, glow, hasPage);
+  }
   col = mix(col, max(col, glow), (.04 + .04 * uHover) * uCrt);
   col *= 1. + .04 * uHover * uCrt;
   // The click cue is part of the picture: drawn before the scanlines, so it bends with the
@@ -234,7 +247,7 @@ async function lo(p, s, options = {}) {
   // Inflatable Scout has one measured pose and its own aperture. It must never
   // request the retired acrylic angle bank, including direct runtime callers.
   if (kind === "scout") {
-    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
+    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=33");
     return mountCanvasComputer(p, s, options);
   }
   const external = kind !== "portfolio";
@@ -451,6 +464,11 @@ async function lo(p, s, options = {}) {
     it = new Float32Array([X[0], X[3], X[6], X[1], X[4], X[7], X[2], X[5], X[8]]),
     It = io(Re),
     Ut = Se(Ye, !0, !0);
+  const pageBackground = external
+    ? Array.from(Re.getContext("2d").getImageData(0, 0, 1, 1).data)
+        .slice(0, 3)
+        .map((v) => v / 255)
+    : [0, 0, 0];
   let ut = 0,
     ae = V,
     se = $,
@@ -474,6 +492,7 @@ async function lo(p, s, options = {}) {
     qe = 1 / 0;
   const previewTimeline = createPreviewTimeline();
   let entryScroll = 0,
+    entryViewport,
     caseAlpha = 1,
     entryPlate;
   let powerNotified = false;
@@ -550,17 +569,18 @@ async function lo(p, s, options = {}) {
     const { x0: t, y0: o, x1: r, y1: n } = ce();
     return { x: t, y: o, w: r - t, h: n - o };
   }
-  function xt(t) {
+  function xt(t, width = U, height = k) {
     const o = (t.x1 - t.x0) / (t.y1 - t.y0),
-      r = U / k;
+      r = width / height;
     return r > o ? { w: 0.8, h: (0.8 * o) / r } : { w: (0.8 * r) / o, h: 0.8 };
   }
   function Vt(t) {
     if (!t) return;
-    const o = Ot();
+    const o = Ot(),
+      targetHeight = external && D ? (o.w * k) / U : o.h;
     for (let r = 0; r < he; r++) {
       const n = o.x + Ae[r * 2] * o.w,
-        a = o.y + (1 - Ae[r * 2 + 1]) * o.h;
+        a = o.y + (1 - Ae[r * 2 + 1]) * targetHeight;
       ((I[r * 2] += (n - I[r * 2]) * t), (I[r * 2 + 1] += (a - I[r * 2 + 1]) * t));
     }
   }
@@ -631,10 +651,14 @@ async function lo(p, s, options = {}) {
       P = ge(d, E),
       L = ce();
     Vt(ft);
-    const z = xt(L),
-      previewHeight = previewSampleHeight(Re, external, k),
-      fittedHeight = (((L.y1 - L.y0) / (L.x1 - L.x0)) * Re.naturalWidth) / Re.naturalHeight,
-      _ = external && D ? previewHeight + (fittedHeight - previewHeight) * ft : previewHeight,
+    const sampling =
+        D && !external && entryViewport
+          ? entrySamplingViewport(entryViewport, { width: U, height: k }, ft)
+          : { width: U, height: k },
+      z = xt(L, sampling.width, sampling.height),
+      previewHeight = previewSampleHeight(Re, external, sampling.height),
+      fittedHeight = externalEntryTarget(L, { width: U, height: k }, Re).sampleHeight,
+      _ = external && D ? externalEntrySample(previewHeight, fittedHeight, ft) : previewHeight,
       te = D ? entryScroll : previewScroll(previewTimeline.elapsed(t), Math.max(0, 1 - _), n),
       y = c.map(st),
       { program: le, uniforms: v } = tt,
@@ -651,7 +675,7 @@ async function lo(p, s, options = {}) {
         e.uniform2f(v.uView, U, k),
         e.uniform4fv(v.uW, G),
         e.uniform1f(v.uScroll, te),
-        e.uniform4f(v.uPage, z.w, z.h, U / We.css, _),
+        e.uniform4f(v.uPage, z.w, z.h, sampling.width / We.css, _),
         e.uniform1f(v.uLines, lt),
         e.uniform1f(v.uCrt, Pe),
         e.uniform1f(v.uReflect, 0.16 * Pe),
@@ -669,6 +693,7 @@ async function lo(p, s, options = {}) {
         ),
         e.uniform1f(v.uApertureCover, 0),
         e.uniform1i(v.uExternal, external ? 1 : 0),
+        e.uniform3fv(v.uPageBackground, pageBackground),
         ye(0, _t, v.uSite),
         ye(5, Ut, v.uCue),
         e.uniform3f(
@@ -708,7 +733,7 @@ async function lo(p, s, options = {}) {
         e.drawArrays(e.TRIANGLE_STRIP, 0, 4),
         e.bindVertexArray(null));
     }
-    if (ht > 0) B(l, y, m, L, ht);
+    if (ht > 0) B(l, y, m, external && D ? ce() : L, ht);
     if (caseAlpha > 0) oe(l, y, m, caseAlpha, true);
     hasPainted = true;
     if (visible) {
@@ -1103,6 +1128,8 @@ async function lo(p, s, options = {}) {
         const { ex, ey } = pt();
         ge(ex, ey);
         const bounds = ce();
+        entryViewport = { width: U, height: k };
+        if (external) entryScroll = scrollStart;
         const promoted = promoteEntryCanvas(u, l, U, k);
         const from = promoted.from;
         U = promoted.width;
@@ -1110,7 +1137,14 @@ async function lo(p, s, options = {}) {
         u.width = Math.round(U * Me);
         u.height = Math.round(k * Me);
         l = { ...from };
-        const to = external ? entryFittedTarget(bounds, U) : entryPortfolioTarget(bounds, U, k);
+        let to = external
+          ? entryFittedTarget(bounds, U)
+          : alignPortfolioEntryTarget(
+              entryPortfolioTarget(bounds, U, k),
+              U,
+              Re.cssWidth,
+              t.getBoundingClientRect().left,
+            );
         je(performance.now()); // Resizing clears WebGL: paint frame zero immediately.
         if (!external) window.scrollTo({ top: 0, behavior: "instant" });
         // The real DOM stays still and hidden until the texture reaches its exact
@@ -1119,6 +1153,12 @@ async function lo(p, s, options = {}) {
           duration: g.matches ? 0 : Gt,
           signal: s,
           frame(progress) {
+            if (external && progress === 1) {
+              const finalViewport = finishExternalViewport(u, { width: U, height: k }, Me);
+              U = finalViewport.width;
+              k = finalViewport.height;
+              to = entryFittedTarget(bounds, U);
+            }
             const eased = co(progress);
             l = {
               x: from.x + (to.x - from.x) * eased,
@@ -1136,7 +1176,8 @@ async function lo(p, s, options = {}) {
             je(performance.now());
           },
         });
-        if (external) entryPlate = await fadeCanvasToPreview(u, Re, s);
+        // The external page already occupies the viewport at its fitted scale.
+        // Hold this exact canvas until navigation replaces the document.
       },
     }
   );
@@ -1155,7 +1196,7 @@ export async function mountComputer(element, parentSignal, options = {}) {
     controller.abort();
     parentSignal?.removeEventListener("abort", abort);
     if (error.message === "WebGL2 unavailable" && !parentSignal?.aborted) {
-      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=ship-4");
+      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=33");
       return mountCanvasComputer(element, parentSignal, options);
     }
     throw error;

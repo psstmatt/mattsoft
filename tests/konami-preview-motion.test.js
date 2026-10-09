@@ -40,6 +40,7 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
   }
   class Context {
     draws = [];
+    drawCalls = [];
     globalAlpha = 1;
     globalCompositeOperation = "source-over";
     constructor(canvas) {
@@ -70,6 +71,7 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
     }
     drawImage(source, ...args) {
       this.draws.push(args);
+      this.drawCalls.push({ source, args, alpha: this.globalAlpha });
       const [dx, dy, dw = source.width, dh = source.height] = args;
       const pixels = this.ensure(),
         src = source.pixels;
@@ -143,6 +145,9 @@ function previewEnvironment({ sourceHeight = 48, reducedMotion = false } = {}) {
       ],
     },
     topology: {
+      columns: 2,
+      rows: 2,
+      boundaryVertexIndices: [0, 1, 3, 2],
       uv: [
         [0, 0],
         [1, 0],
@@ -349,7 +354,7 @@ describe("prepared preview motion", () => {
     }
   });
   for (const kind of ["scout", "references"]) {
-    it(`animates ${kind} into its screen before the fitted destination handoff`, async () => {
+    it(`animates ${kind} to the fitted source on the primary canvas without a second plate`, async () => {
       const test = previewEnvironment();
       test.element.dataset.kind = kind;
       test.install();
@@ -370,20 +375,51 @@ describe("prepared preview motion", () => {
         expect(finished).toBe(false);
         expect(test.created).toHaveLength(1); // No full-page plate replacing the zoom.
         test.advance(700);
-        await Promise.resolve();
-        expect(test.created).toHaveLength(2);
-        const plate = test.created.at(-1);
-        expect(plate.style.opacity).toBe("0");
-        test.advance(810);
-        expect(Number(plate.style.opacity)).toBeCloseTo(0.5, 5);
-        expect(finished).toBe(false);
-        test.advance(920);
         await entry;
         expect(finished).toBe(true);
-        expect(plate.style.opacity).toBe("1");
+        expect(test.created).toEqual([visible]);
+        expect(visible.style.opacity).toBeUndefined();
+        const endpoint = visible.context.drawCalls.filter(({ alpha }) => alpha > 0).at(-1);
+        expect(endpoint.source.width).toBe(16);
+        expect(endpoint.source.height).toBe(48);
+        expect(endpoint.args).toEqual([0, 0, 390, (48 * 390) / 16]);
+        expect(test.frames.size).toBe(0);
       } finally {
         scene?.dispose();
         test.restore();
+      }
+    });
+    it(`finishes ${kind} at current toolbar or orientation dimensions on its original canvas`, async () => {
+      for (const [width, height, dpr] of [
+        [390, 932, 2],
+        [844, 390, 1],
+      ]) {
+        const test = previewEnvironment();
+        test.element.dataset.kind = kind;
+        test.install();
+        let scene;
+        try {
+          scene = await mountCanvasComputer(test.element, new AbortController().signal);
+          const visible = scene.canvas,
+            entry = scene.enter({ style: {} });
+          test.advance(350);
+          globalThis.innerWidth = width;
+          globalThis.innerHeight = height;
+          globalThis.devicePixelRatio = dpr;
+          test.advance(700);
+          await entry;
+          expect(test.created).toEqual([visible]);
+          expect(visible.style.width).toBe(`${width}px`);
+          expect(visible.style.height).toBe(`${height}px`);
+          expect(visible.width).toBe(width * dpr);
+          expect(visible.height).toBe(height * dpr);
+          const endpoint = visible.context.drawCalls.filter(({ alpha }) => alpha > 0).at(-1);
+          expect(endpoint.args).toEqual([0, 0, width, (48 * width) / 16]);
+          expect(test.frames.size).toBe(0);
+        } finally {
+          scene?.dispose();
+          test.restore();
+        }
       }
     });
   }

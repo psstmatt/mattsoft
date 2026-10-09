@@ -252,8 +252,8 @@ describe("Konami source and landing geometry", () => {
     expect(scene).toContain("if (!D && visible)");
     expect(scene).toContain("options.initiallyVisible !== false");
     expect(canvas).toContain('const inflatable = kind === "scout"');
-    expect(scene).toContain('if (kind === "scout")');
-    expect(canvas).toContain("fadeCanvasToPreview");
+    expect(canvas).not.toContain("fadeCanvasToPreview");
+    expect(canvas).toContain("paintPortfolioFrame(ctx, page, frame, meta.topology)");
     expect(canvas).not.toContain('plate = document.createElement("canvas")');
     for (const text of [scene, canvas, source("inflatable-registration.js")]) {
       expect(text).not.toMatch(
