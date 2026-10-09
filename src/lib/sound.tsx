@@ -5,9 +5,16 @@ import { createSoundPlayer, type Tone } from "./sound-engine";
 type SoundApi = {
   play: (tone: Tone) => void;
   stop: () => void;
+  konamiFeedback: (symbol: string, matched: boolean, durationMs?: number) => void;
+  konamiUnlock: () => void;
 };
 
-const SoundContext = createContext<SoundApi>({ play() {}, stop() {} });
+const SoundContext = createContext<SoundApi>({
+  play() {},
+  stop() {},
+  konamiFeedback() {},
+  konamiUnlock() {},
+});
 
 export function SoundProvider({ children }: { children: ReactNode }) {
   const playerRef = useRef<ReturnType<typeof createSoundPlayer> | null>(null);
@@ -51,7 +58,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     [getPlayer],
   );
   const stop = useCallback(() => getPlayer().stop(), [getPlayer]);
-  const value = useMemo(() => ({ play, stop }), [play, stop]);
+  const konamiFeedback = useCallback(
+    (symbol: string, matched: boolean, durationMs = 360) =>
+      getPlayer().konamiFeedback(symbol, matched, durationMs),
+    [getPlayer],
+  );
+  const konamiUnlock = useCallback(() => getPlayer().konamiUnlock(), [getPlayer]);
+  const value = useMemo(
+    () => ({ play, stop, konamiFeedback, konamiUnlock }),
+    [play, stop, konamiFeedback, konamiUnlock],
+  );
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
 }
 

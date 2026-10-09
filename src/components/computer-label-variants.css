@@ -1,0 +1,56 @@
+/* Label-only subsets from Google Fonts. See public/fonts/computer-labels/sources.json
+   and each bundled SIL Open Font License. Never applied to destination pages. */
+@font-face {
+  font-family: "Computer Bricolage";
+  src: url("/fonts/computer-labels/bricolage-grotesque-labels-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Computer DynaPuff";
+  src: url("/fonts/computer-labels/dynapuff-labels-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Computer Fraunces";
+  src: url("/fonts/computer-labels/fraunces-labels-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Computer Unbounded";
+  src: url("/fonts/computer-labels/unbounded-labels-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+/* Consistent label boxes keep the domain/counter still as the type changes. */
+.secret-computer-deck[data-label-style] .secret-computer-label h2 {
+  display: flex;
+  min-height: 40px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+  font-synthesis: none;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.14;
+  letter-spacing: -0.045em;
+}
+.secret-computer-deck[data-label-style] [data-kind="portfolio"] .secret-computer-label h2 {
+  font-family: "Computer Bricolage", "Work Sans", sans-serif;
+}
+.secret-computer-deck[data-label-style] [data-kind="scout"] .secret-computer-label h2 {
+  font-family: "Computer DynaPuff", "Work Sans", sans-serif;
+  letter-spacing: -0.02em;
+}
+.secret-computer-deck[data-label-style] [data-kind="references"] .secret-computer-label h2 {
+  font-family: "Computer Fraunces", Georgia, serif;
+  font-size: 30px;
+  letter-spacing: -0.055em;
+}

@@ -4,7 +4,12 @@ import { createSoundPlayer } from "../src/lib/sound-engine";
 function audio(state = "running") {
   let resolveResume = () => {};
   let rejectResume = () => {};
-  const oscillators: { frequency: number; stops: (number | undefined)[]; started: boolean }[] = [];
+  const oscillators: {
+    frequency: number;
+    stops: (number | undefined)[];
+    starts: number[];
+    started: boolean;
+  }[] = [];
   let resumes = 0;
   let closes = 0;
   const context = {
@@ -23,7 +28,12 @@ function audio(state = "running") {
       return Promise.resolve();
     },
     createOscillator() {
-      const record = { frequency: 0, stops: [] as (number | undefined)[], started: false };
+      const record = {
+        frequency: 0,
+        stops: [] as (number | undefined)[],
+        starts: [] as number[],
+        started: false,
+      };
       oscillators.push(record);
       return {
         type: "sine",
@@ -36,7 +46,8 @@ function audio(state = "running") {
         },
         connect() {},
         disconnect() {},
-        start() {
+        start(at = 0) {
+          record.starts.push(at);
           record.started = true;
         },
         stop(at?: number) {
@@ -46,7 +57,11 @@ function audio(state = "running") {
     },
     createGain() {
       return {
-        gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+        gain: {
+          setValueAtTime() {},
+          linearRampToValueAtTime() {},
+          exponentialRampToValueAtTime() {},
+        },
         connect() {},
         disconnect() {},
       };
@@ -225,6 +240,91 @@ describe("computer audio lifecycle", () => {
     player.setEnabled(false);
     expect(a.oscillators[0].stops).toContain(undefined);
     player.dispose();
+    expect(a.closes()).toBe(1);
+  });
+});
+
+describe("Konami feedback shares the existing audio lifetime", () => {
+  it("uses one context for boot, movement and landing", () => {
+    const a = audio();
+    let created = 0;
+    const player = createSoundPlayer(() => {
+      created++;
+      return a.factory();
+    });
+    player.play("power");
+    player.konamiFeedback("↑", true, 360);
+    expect(created).toBe(1);
+    expect(a.oscillators[0].stops).toContain(undefined);
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([330, 392, 105]);
+    expect(a.oscillators[2].starts[0]).toBeCloseTo(1.2664);
+  });
+  it("cancels prior feedback and its scheduled landing before the next input", () => {
+    const a = audio();
+    const player = createSoundPlayer(a.factory);
+    player.konamiFeedback("↑", true);
+    player.konamiFeedback("↓", true);
+    expect(a.oscillators[0].stops).toContain(undefined);
+    expect(a.oscillators[1].stops).toContain(undefined);
+    player.stop();
+    expect(a.oscillators.every((o) => o.stops.includes(undefined))).toBe(true);
+  });
+  it("plays a finite four-note unlock and suppresses a later boot chime", () => {
+    const a = audio();
+    const player = createSoundPlayer(a.factory);
+    player.konamiUnlock();
+    player.play("power");
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([392, 493.88, 587.33, 783.99]);
+    a.oscillators.forEach((voice, i) => {
+      expect(voice.starts[0]).toBeCloseTo(1 + i * 0.085);
+      expect(voice.stops[0]).toBeCloseTo(1 + i * 0.085 + 0.19);
+    });
+  });
+  it("allows mobile warmup within the movement but does not replay a late landing", async () => {
+    const a = audio("suspended");
+    let time = 0;
+    const player = createSoundPlayer(a.factory, true, () => time);
+    player.konamiFeedback("→", true, 360);
+    time = 350;
+    a.context.state = "running";
+    a.resolve();
+    await flush();
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([330]);
+  });
+  it("drops feedback once its visible movement has ended", async () => {
+    const a = audio("suspended");
+    let time = 0;
+    const player = createSoundPlayer(a.factory, true, () => time);
+    player.konamiFeedback("↑", true, 360);
+    time = 361;
+    a.context.state = "running";
+    a.resolve();
+    await flush();
+    expect(a.oscillators).toHaveLength(0);
+  });
+  it("lets a newer unlock supersede a pending gesture without stale notes", async () => {
+    const pending = audio("suspended");
+    const ready = audio();
+    let calls = 0;
+    const player = createSoundPlayer(() => (++calls === 1 ? pending.factory() : ready.factory()));
+    player.konamiFeedback("↑", true);
+    player.konamiUnlock();
+    pending.context.state = "running";
+    pending.resolve();
+    await flush();
+    expect(pending.oscillators).toHaveLength(0);
+    expect(ready.oscillators).toHaveLength(4);
+    expect(pending.closes()).toBe(1);
+  });
+  it("keeps mistake feedback short and disposal cancels every voice", () => {
+    const a = audio();
+    const player = createSoundPlayer(a.factory);
+    player.konamiFeedback("X", false, 190);
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([150]);
+    player.dispose();
+    player.konamiUnlock();
+    expect(a.oscillators).toHaveLength(1);
+    expect(a.oscillators[0].stops).toContain(undefined);
     expect(a.closes()).toBe(1);
   });
 });

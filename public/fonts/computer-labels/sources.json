@@ -1,0 +1,48 @@
+{
+  "retrieved": "2026-10-09",
+  "cssSource": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@72,600&family=DynaPuff:wght@600&family=Fraunces:opsz,wght@72,600&family=Unbounded:wght@600&display=swap&text=PortfolioScoutReferencesPORTFOLIOSCOUTREFERENCES",
+  "subsetText": "PortfolioScoutReferencesPORTFOLIOSCOUTREFERENCES",
+  "scope": "Secret computer labels only; original font data supplied by Google Fonts text-subset service.",
+  "fonts": [
+    {
+      "family": "Bricolage Grotesque",
+      "weight": 600,
+      "file": "bricolage-grotesque-labels-600.ttf",
+      "bytes": 5044,
+      "sha256": "b3dc92d487aba40ccbe02cbf74b9af9f4a7bb0ad44b2b4460e3fc82d638a022e",
+      "fontSource": "https://fonts.gstatic.com/l/font?kit=3y9U6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpYZMnuECpwUxJBOm_OJWiaaD30YfKfjZZoLvcXlyM03oKdNUJRadl-oOT-lhrRR7fcDPu9kKqOj&skey=7f69194495102d00&v=v9",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/bricolagegrotesque/OFL.txt",
+      "licenseFile": "bricolage-grotesque-OFL.txt"
+    },
+    {
+      "family": "DynaPuff",
+      "weight": 600,
+      "file": "dynapuff-labels-600.ttf",
+      "bytes": 9188,
+      "sha256": "c296b227918c8f60323f93e71b2c26e898bf6f0d3810f1903c902ba10210c509",
+      "fontSource": "https://fonts.gstatic.com/l/font?kit=z7N5dRvsZDIVHbYPMhZJ3HQ83UaSu4uhr7-ZFeoYkgAr1x8RS8gp6YjzWlB8nDchGLI-ZAAtr2MUWV21aYN5XAeA&skey=fa2f3858d8ed1047&v=v9",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/dynapuff/OFL.txt",
+      "licenseFile": "dynapuff-OFL.txt"
+    },
+    {
+      "family": "Fraunces",
+      "weight": 600,
+      "file": "fraunces-labels-600.ttf",
+      "bytes": 7444,
+      "sha256": "4c4c40990f3e6741111e24379a02407069cf1a41b4b0869b4d9acf23b427cab8",
+      "fontSource": "https://fonts.gstatic.com/l/font?kit=6NUh8FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0K7iN7hzFUPJH58nhr1K03gg7S2nfgRYIcaRyjDuzBzg8IfnmrGD-KBsaVusExce7dkYyuoZM&skey=2eca4ab215eafb9c&v=v38",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt",
+      "licenseFile": "fraunces-OFL.txt"
+    },
+    {
+      "family": "Unbounded",
+      "weight": 600,
+      "file": "unbounded-labels-600.ttf",
+      "bytes": 5508,
+      "sha256": "f74263c1ea2e540e1c8e605150d53a1dfc1ff72e998c5076f2a5339f9a6f4be7",
+      "fontSource": "https://fonts.gstatic.com/l/font?kit=Yq6F-LOTXCb04q32xlpat-6uR42XTqtG68b2043fk7XPGQ5pIvh401oKnRDE2LUrH6fnd49-&skey=85bdc4c30fbe73fc&v=v12",
+      "licenseSource": "https://raw.githubusercontent.com/google/fonts/main/ofl/unbounded/OFL.txt",
+      "licenseFile": "unbounded-OFL.txt"
+    }
+  ]
+}

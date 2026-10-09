@@ -1,0 +1,345 @@
+/* WILD PLUS — label-only carnival lettering.
+ * Import after computer-label-variants.css; reuse its four self-hosted faces.
+ * Markup inside h2:
+ * <span class="computer-label-word" aria-hidden="true">
+ *   <span class="computer-label-glyph" data-glyph="P">P</span> …
+ * </span>
+ * Give h2 aria-label={destination.label}; keep the full text as its accessible name.
+ * Only render the spans for labelStyle === "wild-plus".
+ * All embellishment is static, decorative, and inside the existing title box.
+ */
+
+.secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2 {
+  --label-pink: var(--entrance-1, #e56f9a);
+  --label-gold: var(--entrance-2, #ebb557);
+  --label-mint: var(--entrance-3, #64c4a6);
+  --label-blue: var(--entrance-4, #58b4e9);
+  --label-violet: var(--entrance-5, #9182e4);
+  --label-orchid: var(--entrance-6, #df80b5);
+  --label-ink: #244437;
+  --label-rim: #fff8e9;
+  --label-sparkle: #975618;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: calc(100% - 16px);
+  min-height: 66px;
+  margin: 4px auto 0;
+  padding: 7px 20px 10px;
+  box-sizing: border-box;
+  font-weight: 600;
+  font-synthesis: none;
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: -0.065em;
+  color: var(--label-ink);
+  text-transform: none;
+  text-shadow: none;
+  transform: none;
+}
+
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-word {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  white-space: nowrap;
+  transform: rotate(-2deg);
+}
+
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph {
+  --glyph-color: var(--label-pink);
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 80%;
+  color: var(--glyph-color);
+  -webkit-text-stroke: 0.85px var(--label-ink);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 var(--label-rim),
+    0 2px 0 var(--label-ink),
+    0 3px 0 var(--label-ink),
+    0 4px 0 var(--label-ink),
+    1px 5px 0 var(--label-orchid);
+}
+
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph:nth-child(6n + 2) {
+  --glyph-color: var(--label-gold);
+}
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph:nth-child(6n + 3) {
+  --glyph-color: var(--label-mint);
+}
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph:nth-child(6n + 4) {
+  --glyph-color: var(--label-blue);
+}
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph:nth-child(6n + 5) {
+  --glyph-color: var(--label-violet);
+}
+.secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph:nth-child(6n) {
+  --glyph-color: var(--label-orchid);
+}
+
+/* Portfolio: a rainbow of individually inflated, wonky bubble letters. */
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="portfolio"]
+  .secret-computer-label
+  h2 {
+  font-family: "Computer DynaPuff", "Work Sans", sans-serif;
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="portfolio"]
+  .computer-label-glyph:nth-child(3n + 1) {
+  transform: translateY(-0.045em) rotate(-7deg);
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="portfolio"]
+  .computer-label-glyph:nth-child(3n + 2) {
+  transform: translateY(0.025em) rotate(5deg);
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="portfolio"]
+  .computer-label-glyph:nth-child(3n) {
+  transform: translateY(-0.015em) rotate(-2deg);
+}
+
+/* Scout: glossy orange space lettering on a stepped rainbow plinth. */
+.secret-computer-deck[data-label-style="wild-plus"] [data-kind="scout"] .secret-computer-label h2 {
+  --label-ink: #743016;
+  --label-sparkle: #b44c13;
+  font-family: "Computer Unbounded", "Work Sans", sans-serif;
+  font-size: 45px;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+}
+.secret-computer-deck[data-label-style="wild-plus"] [data-kind="scout"] .computer-label-word {
+  transform: rotate(-4deg) skewX(-5deg);
+}
+.secret-computer-deck[data-label-style="wild-plus"] [data-kind="scout"] .computer-label-glyph {
+  color: #ff9a3d;
+  text-shadow:
+    0 -1px 0 #fff1c8,
+    0 1px 0 #743016,
+    0 2px 0 var(--label-pink),
+    0 3px 0 var(--label-pink),
+    0 4px 0 var(--label-violet),
+    0 5px 0 var(--label-violet),
+    0 6px 0 var(--label-blue),
+    0 7px 0 #32675c;
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="scout"]
+  .computer-label-glyph:nth-child(even) {
+  transform: translateY(-0.035em) rotate(3deg);
+}
+
+/* References: oversized pearl-serif lettering with a lilac foil edge. */
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="references"]
+  .secret-computer-label
+  h2 {
+  --label-ink: #524268;
+  --label-sparkle: #7960b4;
+  font-family: "Computer Fraunces", Georgia, serif;
+  font-size: 47px;
+  letter-spacing: -0.067em;
+}
+.secret-computer-deck[data-label-style="wild-plus"] [data-kind="references"] .computer-label-word {
+  transform: rotate(2deg);
+}
+.secret-computer-deck[data-label-style="wild-plus"] [data-kind="references"] .computer-label-glyph {
+  color: #fbebfe;
+  -webkit-text-stroke-width: 0.8px;
+  text-shadow:
+    0 1px 0 #fbf3e3,
+    1px 2px 0 var(--label-ink),
+    1px 3px 0 var(--label-violet),
+    2px 4px 0 var(--label-orchid),
+    2px 5px 0 var(--label-mint);
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="references"]
+  .computer-label-glyph:nth-child(4n + 1) {
+  transform: translateY(-0.025em) rotate(-4deg);
+}
+.secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="references"]
+  .computer-label-glyph:nth-child(4n + 3) {
+  transform: translateY(0.025em) rotate(3deg);
+}
+
+/* Use a separate face on top of the solid-color extrusion. The fallback above
+   stays readable if background-clip is unavailable. No extra semantic text. */
+@supports (-webkit-background-clip: text) {
+  .secret-computer-deck[data-label-style="wild-plus"]
+    [data-kind="scout"]
+    .computer-label-glyph::after,
+  .secret-computer-deck[data-label-style="wild-plus"]
+    [data-kind="references"]
+    .computer-label-glyph::after {
+    content: attr(data-glyph);
+    position: absolute;
+    inset: 0;
+    color: transparent;
+    text-shadow: none;
+    background: linear-gradient(
+      180deg,
+      #fff5cf 5%,
+      #ffc970 32%,
+      #ffad4c 34%,
+      #f67d32 69%,
+      #ffcb76 96%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .secret-computer-deck[data-label-style="wild-plus"]
+    [data-kind="references"]
+    .computer-label-glyph::after {
+    background-image: linear-gradient(
+      160deg,
+      #fff6ec 10%,
+      #e4d2ff 28%,
+      #fff3e0 43%,
+      #94d6c1 52%,
+      #d6c4ef 70%,
+      #ffe9f6 94%
+    );
+  }
+}
+
+/* Two cut-paper sparkles per word. They sit in reserved side gutters and
+   never intercept the computer's click target or enlarge the scroll area. */
+.secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::before,
+.secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 3px;
+  width: 14px;
+  height: 19px;
+  background: var(--label-sparkle);
+  clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 36%);
+  transform: rotate(-13deg);
+  pointer-events: none;
+}
+.secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::after {
+  top: auto;
+  bottom: 13px;
+  left: auto;
+  right: 3px;
+  width: 10px;
+  height: 14px;
+  transform: rotate(15deg);
+  background: var(--label-violet);
+}
+
+.dark .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2 {
+  --label-ink: #122a22;
+  --label-rim: #fff1cd;
+  --label-sparkle: #f7ca75;
+}
+.dark
+  .secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="scout"]
+  .secret-computer-label
+  h2 {
+  --label-ink: #602716;
+  --label-sparkle: #ffc777;
+}
+.dark
+  .secret-computer-deck[data-label-style="wild-plus"]
+  [data-kind="references"]
+  .secret-computer-label
+  h2 {
+  --label-ink: #31223f;
+  --label-sparkle: #e5ceff;
+}
+
+/* Reserve the added lettering depth above the existing navigation, preserving
+   the gap between the case and its label. No scale change during selection. */
+@media (min-width: 701px) {
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-rig {
+    top: min(0px, calc(27vh - 255px));
+  }
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label {
+    top: min(calc(50% + var(--computer-scene-base) * 0.23), calc(100% - 255px));
+    margin-top: 0;
+  }
+}
+
+/* Card width is 60vw below 700px (192px at 320px). Fit the longest title
+   there first; leave the same height for every title so metadata never jumps. */
+@media (max-width: 700px) {
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2 {
+    max-width: calc(100% - 8px);
+    height: 44px;
+    min-height: 44px;
+    margin-top: -3px;
+    padding: 0 10px;
+    font-size: clamp(34px, 9.8vw, 42px);
+  }
+  .secret-computer-deck[data-label-style="wild-plus"]
+    [data-kind="scout"]
+    .secret-computer-label
+    h2 {
+    font-size: clamp(34px, 9.4vw, 41px);
+  }
+  .secret-computer-deck[data-label-style="wild-plus"]
+    [data-kind="references"]
+    .secret-computer-label
+    h2 {
+    font-size: clamp(34px, 9.3vw, 41px);
+  }
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::before {
+    width: 9px;
+    height: 13px;
+    left: 0;
+    top: 5px;
+  }
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::after {
+    width: 7px;
+    height: 10px;
+    right: 0;
+    bottom: 7px;
+  }
+}
+
+/* Preserve the deck's keyboard cue at the real heading, outside glyph art. */
+.secret-computer-deck[data-label-style="wild-plus"]
+  .secret-computer-card:has(.computer-screen-hit:focus-visible)
+  .secret-computer-label
+  h2 {
+  font-weight: 600;
+  text-decoration: none;
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2,
+  .secret-computer-deck[data-label-style="wild-plus"] .computer-label-word,
+  .secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph,
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::before,
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::after {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph {
+    color: CanvasText !important;
+    background: none !important;
+    -webkit-text-stroke: 0 !important;
+    text-shadow: none !important;
+  }
+  .secret-computer-deck[data-label-style="wild-plus"] .computer-label-glyph::after,
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::before,
+  .secret-computer-deck[data-label-style="wild-plus"] .secret-computer-label h2::after {
+    display: none;
+  }
+}
