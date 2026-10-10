@@ -1,0 +1,174 @@
+/* Reviewed Echo lettering and compact, numberless Sonar caption. */
+@font-face {
+  font-family: "Sonar Unbounded";
+  src: url("/fonts/sonar-labels/unbounded-anduril-600.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+.secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption {
+  --sonar-ink: #193f49;
+  --sonar-muted: #456568;
+  --sonar-accent: #147b83;
+  --sonar-foam: #d9f4eb;
+  --sonar-shadow: #327a85;
+  --sonar-outline: #4b999d;
+  --sonar-title-font: var(--font-mono);
+  --sonar-title-size: 27px;
+  --sonar-title-spacing: 0.13em;
+  --sonar-title-case: uppercase;
+  padding: 0 8px;
+}
+html.dark .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption {
+  --sonar-ink: #bfeddf;
+  --sonar-muted: #8bacae;
+  --sonar-accent: #81d5d5;
+  --sonar-foam: #e0fff1;
+  --sonar-shadow: #247680;
+  --sonar-outline: #3b979f;
+}
+.secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption h2 {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: none;
+  min-height: 44px;
+  height: 44px;
+  margin: 2px 0 0;
+  padding: 0;
+  font-family: var(--sonar-title-font);
+  font-size: var(--sonar-title-size);
+  font-style: normal;
+  font-weight: 600;
+  font-synthesis: none;
+  line-height: 1;
+  letter-spacing: var(--sonar-title-spacing);
+  text-transform: var(--sonar-title-case);
+  text-decoration: none;
+  color: var(--sonar-ink);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  -webkit-text-stroke: 0;
+  transform: none;
+}
+.secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption h2::before,
+.secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption h2::after {
+  content: none;
+}
+.secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption p {
+  margin: 4px auto 0;
+  font: 10px/1.2 var(--font-mono);
+  letter-spacing: -0.025em;
+  color: var(--sonar-muted);
+  text-decoration: none;
+}
+.sonar-caption-word {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+.sonar-caption-glyph {
+  display: inline-block;
+}
+
+/* Echo: a solid signal with two fine, offset returns. Decorative copies stay
+   behind the readable word and inside its reserved title height. */
+.secret-computer-deck[data-label-style]
+  [data-kind="anduril"]
+  .sonar-caption[data-sonar-type="echo"] {
+  --sonar-title-font: "Sonar Unbounded", "Work Sans", sans-serif;
+  --sonar-title-size: 31px;
+  --sonar-title-spacing: -0.065em;
+}
+.sonar-caption[data-sonar-type="echo"] .sonar-caption-word {
+  transform: translate(-2px, -3px);
+}
+.sonar-caption[data-sonar-type="echo"] .sonar-caption-word::before,
+.sonar-caption[data-sonar-type="echo"] .sonar-caption-word::after {
+  content: attr(data-word);
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: 0.75px var(--sonar-outline);
+  transform: translate(3px, 4px);
+}
+.sonar-caption[data-sonar-type="echo"] .sonar-caption-word::before {
+  opacity: 0.55;
+  transform: translate(6px, 8px);
+}
+
+@media (min-width: 701px) {
+  .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption {
+    padding-top: 24px;
+  }
+}
+
+/* Keep the same shared position and a shorter footprint on small phones. */
+@media (max-width: 700px) {
+  .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption {
+    --sonar-title-size: 23px;
+  }
+  .secret-computer-deck[data-label-style]
+    [data-kind="anduril"]
+    .sonar-caption[data-sonar-type="echo"] {
+    --sonar-title-size: 25px;
+  }
+  .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption h2 {
+    min-height: 40px;
+    height: 40px;
+  }
+  .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption p {
+    font-size: 9px;
+  }
+}
+
+/* On a short phone viewport, move this complete scene up together. The case
+   keeps its scale, the field stays under its feet, and navigation keeps its
+   original 44px targets and safe-area clearance. */
+@media (max-width: 700px) {
+  .secret-computer-card[data-kind="anduril"] {
+    --sonar-compact-lift: clamp(0px, calc((620px - 100svh) * 0.3), 66px);
+  }
+  .secret-computer-card[data-kind="anduril"] .secret-computer-rig {
+    top: calc(-1 * var(--sonar-compact-lift));
+  }
+  .secret-computer-deck[data-label-style] [data-kind="anduril"] .sonar-caption {
+    top: calc(50% + var(--computer-scene-base) * 0.19 - var(--sonar-compact-lift));
+  }
+}
+
+/* Static treatments are also their reduced-motion presentation. */
+@media (prefers-reduced-motion: reduce) {
+  .sonar-caption,
+  .sonar-caption * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (forced-colors: active) {
+  html
+    .secret-computer-deck[data-label-style]
+    [data-kind="anduril"]
+    .sonar-caption[data-sonar-type] {
+    --sonar-ink: CanvasText;
+    --sonar-muted: CanvasText;
+    --sonar-accent: CanvasText;
+    --sonar-foam: CanvasText;
+  }
+  .sonar-caption[data-sonar-type] .sonar-caption-word {
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+  .sonar-caption .sonar-caption-word::before,
+  .sonar-caption .sonar-caption-word::after {
+    display: none;
+  }
+}

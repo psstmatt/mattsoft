@@ -3,6 +3,7 @@ export const COMPUTER_FOCUS = Object.freeze({
   portfolio: "stage",
   scout: "halo",
   references: "spotlight",
+  anduril: "tidal",
 } as const);
 
 type FocusOwner = { focus: (options?: FocusOptions) => void };

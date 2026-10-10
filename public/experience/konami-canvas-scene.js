@@ -1,4 +1,4 @@
-import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=24";
+import { captureScreenSource, previewSampleHeight } from "./konami-screen-source.js?v=48";
 import { fittedPortfolioFrame, paintPortfolioFrame } from "./konami-page-projection.js?v=33";
 import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=33";
 import { applyComputerLayout } from "./konami-layout.js";
@@ -17,6 +17,15 @@ import {
   previewScroll,
   createPreviewTimeline,
 } from "./konami-transition.js?v=33";
+
+import {
+  SONAR_ASSET,
+  sonarScreenGeometry,
+  sonarPose,
+  prepareSonarBody,
+  sonarInteractionTarget,
+  easeSonarInteraction,
+} from "./sonar-registration.js?v=50";
 
 const ROOT = "/experience/models/ivory-classic/frames/";
 export function portfolioCasePixel(red, green, blue, alpha, u, v, dark = false) {
@@ -93,12 +102,17 @@ export async function mountCanvasComputer(
   const button = element.querySelector("[data-computer-enter]");
   const kind = element.dataset.kind || "portfolio";
   const inflatable = kind === "scout";
-  const characterEntry =
-    kind !== "portfolio" && ["tactile", "portal", "absurd"].includes(entryMotion)
+  const sonar = kind === "anduril";
+  const label = sonar ? element.querySelector(".secret-computer-label") : null;
+  const heading = label?.querySelector("h2");
+  const rig = sonar ? element.querySelector(".secret-computer-rig") : null;
+  const characterEntry = sonar
+    ? await import("./sonar-entry.js?v=47")
+    : kind !== "portfolio" && ["tactile", "portal", "absurd"].includes(entryMotion)
       ? await import("./konami-character-entry.js?v=38")
       : null;
   if (!stage || !button) throw new Error("Computer stage or entry button missing");
-  if (!["portfolio", "scout", "references"].includes(kind))
+  if (!["portfolio", "scout", "references", "anduril"].includes(kind))
     throw new Error("Unknown computer destination");
   const local = new AbortController(),
     abort = () => local.abort(signal?.reason);
@@ -112,6 +126,7 @@ export async function mountCanvasComputer(
     resize,
     animationFrame = 0,
     lastPaint = 0,
+    lastSourcePaint = 0,
     lastScroll = -1,
     entryController,
     entryTask,
@@ -121,16 +136,25 @@ export async function mountCanvasComputer(
     canvas,
     overlay,
     page,
+    sonarPages,
     meta,
     body,
     darkBody,
+    sonarActiveBody,
+    sonarHitPixels,
+    sonarEmission = 0,
+    sonarLift = 0,
+    interactionTime = 0,
+    focused = false,
+    hovered = false,
     themeObserver,
     coverage,
     glass,
     composite,
     dirty = true;
   let previousWidth = 0,
-    previousHeight = 0;
+    previousHeight = 0,
+    labelCeiling = Infinity;
   const images = [];
   const dispose = () => {
     if (disposed) return;
@@ -157,11 +181,13 @@ export async function mountCanvasComputer(
   }
   try {
     s.throwIfAborted();
-    const caseFile = inflatable
-      ? INFLATABLE_ASSET
-      : kind === "references"
-        ? "/experience/models/references-chrome-baked/frames/case-1-9.webp"
-        : ROOT + "case-1-9.webp";
+    const caseFile = sonar
+      ? SONAR_ASSET
+      : inflatable
+        ? INFLATABLE_ASSET
+        : kind === "references"
+          ? "/experience/models/references-chrome-baked/frames/case-1-9.webp"
+          : ROOT + "case-1-9.webp";
     const response = await awaitCaptureReady(
       fetch("/experience/shared-screen-center.json", { signal: s }),
       s,
@@ -173,13 +199,35 @@ export async function mountCanvasComputer(
       image(caseFile),
       image(ROOT + "case-1-9.webp"),
       image(ROOT + "glass-1-9.webp"),
-      captureScreenSource({ signal: s, kind }),
+      sonar
+        ? Promise.all([
+            captureScreenSource({ signal: s, kind, viewportWidth: 390 }),
+            captureScreenSource({ signal: s, kind, viewportWidth: 1200 }),
+          ]).then(([narrow, wide]) => {
+            sonarPages = { narrow, wide };
+            return globalThis.innerWidth <= 700 ? narrow : wide;
+          })
+        : captureScreenSource({ signal: s, kind }),
     ]);
     s.throwIfAborted();
     if (inflatable) {
       const originalMeta = meta;
       meta = inflatableScreenGeometry(originalMeta);
       glass = fitInflatableGlass(glass, originalMeta, meta);
+      coverage = body;
+    }
+    if (sonar) {
+      const originalMeta = meta;
+      meta = sonarScreenGeometry(originalMeta);
+      glass = fitInflatableGlass(glass, originalMeta, meta);
+      const imageBody = body;
+      body = prepareSonarBody(imageBody, meta, 0);
+      sonarActiveBody = prepareSonarBody(imageBody, meta, 1);
+      const hitCanvas = document.createElement("canvas");
+      hitCanvas.width = hitCanvas.height = meta.width;
+      const hitContext = hitCanvas.getContext("2d");
+      hitContext.drawImage(imageBody, 0, 0, meta.width, meta.width);
+      sonarHitPixels = hitContext.getImageData(0, 0, meta.width, meta.width).data;
       coverage = body;
     }
     if (kind === "portfolio") {
@@ -265,13 +313,14 @@ export async function mountCanvasComputer(
       c.drawImage(reflection, 0, 0);
       c.globalAlpha = 1;
       c.globalCompositeOperation = "source-over";
-      c.drawImage(
-        darkBody && document.documentElement.classList.contains("dark") ? darkBody : body,
-        0,
-        0,
-        n,
-        n,
-      );
+      if (!sonar)
+        c.drawImage(
+          darkBody && document.documentElement.classList.contains("dark") ? darkBody : body,
+          0,
+          0,
+          n,
+          n,
+        );
       dirty = false;
     }
     function canAnimate() {
@@ -286,19 +335,34 @@ export async function mountCanvasComputer(
         previewSampleHeight(page, kind !== "portfolio", stage.clientHeight) < 1
       );
     }
+    function sonarSettling() {
+      if (!sonar || disposed || entering || !visible || document.hidden) return false;
+      const target = sonarInteractionTarget(active, hovered, focused, reduced.matches);
+      return (
+        Math.abs(target.emission - sonarEmission) > 0.002 ||
+        Math.abs(target.lift - sonarLift) > 0.002
+      );
+    }
+    function paintSonarBody(ctx, pose) {
+      ctx.drawImage(body, pose.x, pose.y, pose.s, pose.s);
+      ctx.globalAlpha = sonarEmission;
+      ctx.drawImage(sonarActiveBody, pose.x, pose.y, pose.s, pose.s);
+      ctx.globalAlpha = 1;
+    }
     function schedule() {
       previewTimeline.setRunning(canAnimate(), performance.now());
-      if (!animationFrame && canAnimate()) animationFrame = requestAnimationFrame(tick);
+      if (!animationFrame && (canAnimate() || sonarSettling()))
+        animationFrame = requestAnimationFrame(tick);
     }
     function tick(now) {
       animationFrame = 0;
-      if (!canAnimate()) {
+      if (!canAnimate() && !sonarSettling()) {
         previewTimeline.setRunning(false, now);
         return;
       }
       // Prepared page sampling is smooth at 20 fps without rasterizing a whole
       // desktop-sized computer on every phone display refresh.
-      if (now - lastPaint >= 50) render(now);
+      if (sonarSettling() || now - lastPaint >= 50) render(now);
       schedule();
     }
     function render(now = performance.now()) {
@@ -306,8 +370,34 @@ export async function mountCanvasComputer(
       const w = stage.clientWidth,
         h = stage.clientHeight;
       if (!w || !h) return;
+      if (sonarPages) {
+        const responsivePage = globalThis.innerWidth <= 700 ? sonarPages.narrow : sonarPages.wide;
+        if (page !== responsivePage) {
+          page = overlay = responsivePage;
+          previewTimeline = createPreviewTimeline();
+          lastScroll = -1;
+          dirty = true;
+        }
+      }
       previewTimeline.setRunning(canAnimate(), now);
-      const scroll =
+      if (sonar) {
+        const target = sonarInteractionTarget(active, hovered, focused, reduced.matches);
+        const elapsed = interactionTime ? Math.min(now - interactionTime, 80) : 16;
+        sonarEmission = easeSonarInteraction(
+          sonarEmission,
+          target.emission,
+          elapsed,
+          reduced.matches,
+        );
+        sonarLift = easeSonarInteraction(
+          sonarLift,
+          reduced.matches ? 0 : target.lift,
+          elapsed,
+          reduced.matches,
+        );
+        interactionTime = now;
+      }
+      const desiredScroll =
         overlay === page
           ? previewScroll(
               previewTimeline.elapsed(now),
@@ -315,13 +405,20 @@ export async function mountCanvasComputer(
               reduced.matches,
             )
           : 0;
+      const scroll =
+        sonar && lastScroll >= 0 && now - lastSourcePaint < 50 ? lastScroll : desiredScroll;
       if (scroll !== lastScroll) dirty = true;
       lastScroll = scroll;
       element.dataset.previewScroll = scroll.toFixed(6);
       if (kind === "portfolio" && (w !== previousWidth || h !== previousHeight)) dirty = true;
+      if (sonar && label && rig && (w !== previousWidth || h !== previousHeight))
+        labelCeiling = label.offsetTop + (heading?.offsetTop || 0) - rig.offsetTop - 12;
       previousWidth = w;
       previousHeight = h;
-      if (dirty) rebuild(w, h, scroll);
+      if (dirty) {
+        rebuild(w, h, scroll);
+        lastSourcePaint = now;
+      }
       const dpr = Math.min(devicePixelRatio || 1, 2);
       if (canvas.width !== Math.round(w * dpr)) canvas.width = Math.round(w * dpr);
       if (canvas.height !== Math.round(h * dpr)) canvas.height = Math.round(h * dpr);
@@ -329,10 +426,34 @@ export async function mountCanvasComputer(
       x.setTransform(dpr, 0, 0, dpr, 0, 0);
       x.clearRect(0, 0, w, h);
       const standardPose = applyComputerLayout(element, w, h),
-        pose = inflatable ? inflatablePose(standardPose) : standardPose,
+        pose = sonar
+          ? sonarPose(standardPose)
+          : inflatable
+            ? inflatablePose(standardPose)
+            : standardPose,
         size = pose.s;
+      if (sonar) {
+        const bodyWidth = size * 0.8652;
+        element.style.setProperty("--sonar-body-width", `${bodyWidth}px`);
+        element.style.setProperty("--sonar-field-x", `${pose.x + size * 0.5227}px`);
+        element.style.setProperty(
+          "--sonar-field-y",
+          `${Math.min(pose.y + size * 0.9195 - bodyWidth * 0.13, labelCeiling - bodyWidth * 0.1605)}px`,
+        );
+        x.save();
+        x.translate(pose.x + size * 0.5227, pose.y + size * 0.9195 - bodyWidth * 0.018);
+        x.scale(bodyWidth * 0.43, bodyWidth * 0.028);
+        const contact = x.createRadialGradient(0, 0, 0, 0, 0, 1);
+        contact.addColorStop(0, "rgba(0,15,24,0.2)");
+        contact.addColorStop(1, "rgba(0,15,24,0)");
+        x.fillStyle = contact;
+        x.fillRect(-1, -1, 2, 2);
+        x.restore();
+        pose.y -= sonarLift * Math.min(2, size * 0.005);
+      }
       layout = { x: pose.x, y: pose.y, size };
       x.drawImage(composite, layout.x, layout.y, size, size);
+      if (sonar) paintSonarBody(x, pose);
       lastPaint = now;
       if (visible) {
         const px = points.map((p) => layout.x + (p[0] * size) / meta.width);
@@ -368,6 +489,60 @@ export async function mountCanvasComputer(
       previewTimeline.setRunning(false, performance.now());
       render();
     };
+    if (sonar) {
+      const setHovered = (value) => {
+        if (hovered === value) return;
+        hovered = value;
+        element.dataset.sonarHovered = String(value);
+        render();
+      };
+      element.addEventListener(
+        "pointermove",
+        (event) => {
+          if (event.pointerType !== "mouse" || !layout || entering) return;
+          const rect = canvas.getBoundingClientRect();
+          const px =
+            (((event.clientX - rect.left) * stage.clientWidth) / rect.width - layout.x) /
+            layout.size;
+          const py =
+            (((event.clientY - rect.top) * stage.clientHeight) / rect.height - layout.y) /
+            layout.size;
+          const ix = Math.floor(px * meta.width),
+            iy = Math.floor(py * meta.width);
+          setHovered(
+            ix >= 0 &&
+              ix < meta.width &&
+              iy >= 0 &&
+              iy < meta.width &&
+              sonarHitPixels[(iy * meta.width + ix) * 4 + 3] > 128,
+          );
+        },
+        { signal: s },
+      );
+      button.addEventListener(
+        "focus",
+        () => {
+          focused = button.matches(":focus-visible");
+          render();
+        },
+        { signal: s },
+      );
+      button.addEventListener(
+        "blur",
+        () => {
+          focused = false;
+          render();
+        },
+        { signal: s },
+      );
+      element.addEventListener(
+        "pointerleave",
+        () => {
+          setHovered(false);
+        },
+        { signal: s },
+      );
+    }
     document.addEventListener("visibilitychange", resume, { signal: s });
     reduced.addEventListener("change", resume, { signal: s });
     resize = new ResizeObserver(() => render());
@@ -401,6 +576,11 @@ export async function mountCanvasComputer(
       setActive(value) {
         if (disposed || entering || active === !!value) return;
         active = !!value;
+        if (sonar && !active) {
+          hovered = false;
+          focused = false;
+          element.dataset.sonarHovered = "false";
+        }
         resume();
       },
       setVisible(value) {
@@ -436,9 +616,14 @@ export async function mountCanvasComputer(
           const abortEntry = () => controller.abort(s.reason);
           s.addEventListener("abort", abortEntry, { once: true });
           if (s.aborted) abortEntry();
+          let entryBody = body;
+          if (sonar) {
+            entryBody = make();
+            paintSonarBody(entryBody.getContext("2d"), { x: 0, y: 0, s: meta.width });
+          }
           entryTask = characterEntry.playCharacterEntry({
             canvas,
-            body,
+            body: entryBody,
             coverage,
             glass: reflection,
             page,

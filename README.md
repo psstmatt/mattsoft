@@ -49,3 +49,18 @@ Vercel Web Analytics and Speed Insights retain their original canonical-host gua
 Keyboard focus uses the reviewed per-machine effects: Stage for Portfolio, Halo for Scout, and Spotlight for References. Effects follow only the active keyboard-focused machine, clear during pointer selection and entry, and use static equivalents under reduced motion. Forced-colors mode retains a compact caption focus cue. The secret deck still requires the Konami code; review controls and query bypasses are excluded.
 
 Sound remains on with the original retro cues. A silent AudioContext is prepared before screen-on; the boot chime plays only when the browser permits it at that stage. Blocked boot audio is never replayed late. Konami and activation gestures resume one shared context, discard stale feedback, and recover after interruptions. Browser autoplay policy and device volume still apply.
+
+## Sonar computer
+
+Completing the Konami code unlocks four computers: Portfolio, Scout, References
+and Anduril. The Anduril computer uses the reviewed upright navy Sonar case,
+Tidal Field selection/focus, Echo lettering, and a curved screen mesh shared
+by its idle preview and screen-entry animation. Machine captions have no
+numeric eyebrows; the navigation retains the position count.
+
+The Sonar renderer is a single-pose Canvas scene with public desktop/portrait
+captures of Anduril Descent. It navigates to https://anduril.psstmatt.com/ after
+entry. Cross-site loading remains controlled by the destination. Reduced
+motion uses a static selection cue and immediate entry. The existing green,
+inflatable and sticker scenes, sound lifecycle and telemetry are preserved.
+No review controls, type selectors, replay controls or query unlocks ship.
