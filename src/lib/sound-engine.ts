@@ -44,6 +44,40 @@ export function createSoundPlayer(
     voices.clear();
   }
 
+  function onStateChange() {
+    // Scheduled landings must not survive an interruption and play on return.
+    if (context?.state !== "running") stop();
+  }
+
+  function getContext(gesture = false) {
+    // A suspended context may still be starting after the previous key. Closing
+    // it here would restart that work on every input and can keep it silent.
+    if (gesture && context && (context.state === "closed" || context.state === "interrupted")) {
+      const previous = context;
+      stop();
+      previous.removeEventListener("statechange", onStateChange);
+      context = null;
+      lastHover = -Infinity;
+      if (previous.state !== "closed") void previous.close().catch(() => {});
+    }
+    if (!context) {
+      context = createContext();
+      context?.addEventListener("statechange", onStateChange);
+    }
+    return context;
+  }
+
+  function prepare() {
+    if (!enabled || disposed) return;
+    try {
+      // Let permitted audio initialize before screen-on. Do not resume a blocked
+      // context or schedule any sound; power is still attempted at screen-on only.
+      getContext();
+    } catch {
+      /* Audio is optional; the visual experience continues. */
+    }
+  }
+
   function emitRecipe(recipe: SoundRecipe, delay = 0) {
     if (!context || context.state !== "running" || !enabled || disposed) return;
     const now = context.currentTime + delay;
@@ -81,20 +115,11 @@ export function createSoundPlayer(
   }
 
   function withContext(gesture: boolean, allowResume: boolean, emitNow: () => void) {
-    if (!enabled) return;
+    if (!enabled || disposed) return;
     try {
-      // A blocked startup attempt must not own the first user-activated sound.
-      // Also recover a closed/interrupted mobile context in the next real gesture.
-      if (gesture && context && context.state !== "running") {
-        const previous = context;
-        stop();
-        context = null;
-        lastHover = -Infinity;
-        void previous.close().catch(() => {});
-      }
-      context ??= createContext();
-      if (!context) return;
-      if (context.state === "running") {
+      const requestedContext = getContext(gesture);
+      if (!requestedContext) return;
+      if (requestedContext.state === "running") {
         emitNow();
         return;
       }
@@ -102,11 +127,18 @@ export function createSoundPlayer(
       if (!allowResume) return;
       const request = ++generation;
       const requestedAt = clock();
-      void context
+      // Call resume in each gesture, even if a prior request is still pending:
+      // that request may have lacked browser activation. Reuse the context and
+      // let only the newest, still-relevant feedback play when it starts.
+      void requestedContext
         .resume()
         .then(() => {
-          // Resume only from an actual control activation; discard stale or cancelled clicks.
-          if (request === generation && clock() - requestedAt <= GESTURE_SOUND_DEADLINE_MS)
+          if (
+            context === requestedContext &&
+            requestedContext.state === "running" &&
+            request === generation &&
+            clock() - requestedAt <= GESTURE_SOUND_DEADLINE_MS
+          )
             emitNow();
         })
         .catch(() => {});
@@ -195,6 +227,7 @@ export function createSoundPlayer(
   }
 
   return {
+    prepare,
     play,
     konamiFeedback,
     konamiUnlock,
@@ -207,6 +240,7 @@ export function createSoundPlayer(
     dispose() {
       disposed = true;
       stop();
+      context?.removeEventListener("statechange", onStateChange);
       void context?.close().catch(() => {});
     },
   };

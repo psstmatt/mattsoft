@@ -31,6 +31,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    getPlayer().prepare();
     const cancelPendingAudio = () => playerRef.current?.stop();
     const onVisibility = () => {
       if (document.hidden) cancelPendingAudio();
@@ -43,7 +44,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       playerRef.current?.dispose();
       playerRef.current = null;
     };
-  }, []);
+  }, [getPlayer]);
 
   const play = useCallback(
     (tone: Tone) => {
