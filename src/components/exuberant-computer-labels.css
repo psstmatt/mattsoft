@@ -307,31 +307,13 @@
   }
 }
 
-/* Keep keyboard focus on the quiet destination caption, outside the glyph art. */
+/* Preserve the approved lettering while the separate focus effect is active. */
 .secret-computer-deck[data-label-style="wild-plus"]
   .secret-computer-card:has(.computer-screen-hit:focus-visible)
   .secret-computer-label
   h2 {
   font-weight: 600;
   text-decoration: none;
-}
-.secret-computer-deck[data-label-style="wild-plus"]
-  .secret-computer-card:has(.computer-screen-hit:focus-visible)
-  .secret-computer-label
-  p {
-  color: var(--foreground);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 5px;
-}
-@media (forced-colors: active) {
-  .secret-computer-deck[data-label-style="wild-plus"]
-    .secret-computer-card:has(.computer-screen-hit:focus-visible)
-    .secret-computer-label
-    p {
-    color: LinkText;
-    text-decoration-color: Highlight;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

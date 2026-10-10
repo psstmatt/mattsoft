@@ -5,6 +5,7 @@
 @import "./components/secret-computer-deck.css";
 @import "./components/computer-label-variants.css";
 @import "./components/exuberant-computer-labels.css";
+@import "./components/computer-focus.css";
 @import "./components/portfolio-hover.css";
 
 @font-face {
