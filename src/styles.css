@@ -6,6 +6,7 @@
 @import "./components/computer-label-variants.css";
 @import "./components/exuberant-computer-labels.css";
 @import "./components/computer-focus.css";
+@import "./components/sonar-computer.css";
 @import "./components/portfolio-hover.css";
 
 @font-face {

@@ -3,9 +3,16 @@ import { capturePortfolio, awaitCaptureReady } from "./computer-snapshot.js";
 export const SCREEN_SOURCES = Object.freeze({
   scout: "/previews/scout-header-only.jpg",
   references: "/previews/references-tall.jpg",
+  anduril: "/previews/anduril-descent.jpg",
 });
 
 export const PREVIEW_ASPECT = 1.28;
+
+export function screenSourceForViewport(kind, viewportWidth) {
+  if (kind === "anduril" && viewportWidth > 0 && viewportWidth <= 700)
+    return "/previews/anduril-descent-portrait.jpg";
+  return SCREEN_SOURCES[kind];
+}
 
 export function previewSourceDimensions(width, height, maxTextureSize = 4096) {
   const paddedHeight = Math.max(height, Math.ceil(width / PREVIEW_ASPECT));
@@ -30,10 +37,11 @@ export async function captureScreenSource({
   signal,
   kind = "portfolio",
   maxTextureSize = 4096,
+  viewportWidth = globalThis.innerWidth,
 } = {}) {
   signal?.throwIfAborted();
   if (kind === "portfolio") return capturePortfolio({ signal, maxTextureSize });
-  const source = SCREEN_SOURCES[kind];
+  const source = screenSourceForViewport(kind, viewportWidth);
   if (!source) throw new Error("Unknown computer destination");
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -62,7 +70,7 @@ export async function captureScreenSource({
     canvas.height = dimensions.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Destination preview canvas unavailable");
-    ctx.fillStyle = kind === "references" ? "#f7f9fa" : "#0d0c0a";
+    ctx.fillStyle = kind === "references" ? "#f7f9fa" : kind === "anduril" ? "#061b2a" : "#0d0c0a";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const scale = dimensions.scale;
     ctx.drawImage(bitmap, 0, 0, bitmap.width * scale, bitmap.height * scale);

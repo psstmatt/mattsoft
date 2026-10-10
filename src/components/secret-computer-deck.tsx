@@ -7,6 +7,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useReducedMotion } from "motion/react";
+import { SonarCaption } from "./sonar-caption";
 import { useSound } from "@/lib/sound";
 import { COMPUTER_FOCUS, releaseComputerFocus } from "@/lib/computer-focus";
 import {
@@ -76,10 +77,17 @@ const destinations = [
     detail: "Puffy vinyl · chrome foil",
     url: "https://references.psstmatt.com/",
   },
+  {
+    kind: "anduril",
+    label: "Anduril",
+    domain: "anduril.psstmatt.com",
+    detail: "Descent",
+    url: "https://anduril.psstmatt.com/",
+  },
 ] as const;
 const paths = {
   computer: "/experience/konami-computer-scene.js?v=ship-absurd-1",
-  canvas: "/experience/konami-canvas-scene.js?v=ship-absurd-1",
+  canvas: "/experience/konami-canvas-scene.js?v=sonar-53",
   material: "/experience/computer-material.js?v=2",
   transition: "/experience/computer-transition.js?v=1",
 };
@@ -98,7 +106,7 @@ export function SecretComputerDeck({
   const reduced = useReducedMotion();
   const dialog = useRef<HTMLElement>(null);
   const cards = useRef<(HTMLElement | null)[]>([]);
-  const scenes = useRef<(Scene | null)[]>([null, null, null]);
+  const scenes = useRef<(Scene | null)[]>(destinations.map(() => null));
   const transition = useRef<{
     fadeToPortfolio: (
       overlay: HTMLElement,
@@ -106,7 +114,7 @@ export function SecretComputerDeck({
       signal?: AbortSignal,
     ) => Promise<void>;
   } | null>(null);
-  const controllers = useRef<(AbortController | null)[]>([null, null, null]);
+  const controllers = useRef<(AbortController | null)[]>(destinations.map(() => null));
   const alive = useRef(false);
   const [, setReadyCount] = useState(0);
   const busy = useRef(false);
@@ -178,9 +186,9 @@ export function SecretComputerDeck({
     animation.current?.cancel();
     animation.current = null;
     controllers.current.forEach((controller) => controller?.abort());
-    controllers.current = [null, null, null];
+    controllers.current = destinations.map(() => null);
     scenes.current.forEach((scene) => scene?.dispose());
-    scenes.current = [null, null, null];
+    scenes.current = destinations.map(() => null);
   }, []);
 
   const mount = useCallback(
@@ -289,7 +297,7 @@ export function SecretComputerDeck({
       updateScreens();
       setAnnouncement(
         next.unlocked
-          ? "Secret unlocked. Three computers available."
+          ? `Secret unlocked. ${destinations.length} computers available.`
           : `${symbol}. ${next.prefix.length} of ${mode === "touch" ? 8 : 10} matched.`,
       );
     },
@@ -394,8 +402,9 @@ export function SecretComputerDeck({
   }, [mount, disposeScenes, onComplete, play, stop]);
   useEffect(() => {
     if (code.unlocked) {
-      void mount(1);
-      void mount(2);
+      destinations.forEach((_, index) => {
+        if (index !== 0) void mount(index);
+      });
     }
   }, [code.unlocked, mount]);
 
@@ -566,24 +575,27 @@ export function SecretComputerDeck({
                 }}
               />
             </div>
-            <div className="secret-computer-label">
-              <span>0{index + 1}</span>
-              <h2 aria-label={destination.label}>
-                {labelStyle === "wild-plus" ? (
-                  <span className="computer-label-word" aria-hidden="true">
-                    {[...destination.label].map((letter, i) => (
-                      <span className="computer-label-glyph" data-glyph={letter} key={i}>
-                        {letter}
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  destination.label
-                )}
-              </h2>
-              <p>{destination.domain}</p>
-              <small>{destination.detail}</small>
-            </div>
+            {destination.kind === "anduril" ? (
+              <SonarCaption label={destination.label} domain={destination.domain} />
+            ) : (
+              <div className="secret-computer-label">
+                <h2 aria-label={destination.label}>
+                  {labelStyle === "wild-plus" ? (
+                    <span className="computer-label-word" aria-hidden="true">
+                      {[...destination.label].map((letter, i) => (
+                        <span className="computer-label-glyph" data-glyph={letter} key={i}>
+                          {letter}
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    destination.label
+                  )}
+                </h2>
+                <p>{destination.domain}</p>
+                <small>{destination.detail}</small>
+              </div>
+            )}
           </article>
         ))}
       </div>
@@ -592,8 +604,13 @@ export function SecretComputerDeck({
           <button disabled={entering || active === 0} onClick={() => select(activeRef.current - 1)}>
             Previous
           </button>
-          <span aria-live="polite">0{active + 1} / 03</span>
-          <button disabled={entering || active === 2} onClick={() => select(activeRef.current + 1)}>
+          <span aria-live="polite">
+            0{active + 1} / 0{destinations.length}
+          </span>
+          <button
+            disabled={entering || active === destinations.length - 1}
+            onClick={() => select(activeRef.current + 1)}
+          >
             Next
           </button>
         </nav>
