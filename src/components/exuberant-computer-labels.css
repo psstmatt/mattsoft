@@ -307,16 +307,13 @@
   }
 }
 
-/* Preserve the deck's keyboard cue at the real heading, outside glyph art. */
+/* Preserve the approved lettering while the separate focus effect is active. */
 .secret-computer-deck[data-label-style="wild-plus"]
   .secret-computer-card:has(.computer-screen-hit:focus-visible)
   .secret-computer-label
   h2 {
   font-weight: 600;
   text-decoration: none;
-  outline: 2px solid var(--foreground);
-  outline-offset: 3px;
-  border-radius: 8px;
 }
 
 @media (prefers-reduced-motion: reduce) {

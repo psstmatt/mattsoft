@@ -45,3 +45,7 @@ The Vercel Production artifact can be staged without assigning a domain. Moving 
 The homepage opens with a green computer. Click or tap its screen to enter, or use Tab and Enter. Escape and Skip intro open the portfolio directly. Reduced-motion preferences skip the zoom. The rainbow stays visible for four seconds after entry and then fades. Direct links to project pages keep their normal navigation.
 
 Vercel Web Analytics and Speed Insights retain their original canonical-host guards and project configuration. Run `bun test tests` for the entrance timing, material color, and telemetry checks in addition to the existing checks.
+
+Keyboard focus uses the reviewed per-machine effects: Stage for Portfolio, Halo for Scout, and Spotlight for References. Effects follow only the active keyboard-focused machine, clear during pointer selection and entry, and use static equivalents under reduced motion. Forced-colors mode retains a compact caption focus cue. The secret deck still requires the Konami code; review controls and query bypasses are excluded.
+
+Sound remains on with the original retro cues. A silent AudioContext is prepared before screen-on; the boot chime plays only when the browser permits it at that stage. Blocked boot audio is never replayed late. Konami and activation gestures resume one shared context, discard stale feedback, and recover after interruptions. Browser autoplay policy and device volume still apply.

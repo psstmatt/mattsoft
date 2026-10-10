@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useReducedMotion } from "motion/react";
 import { useSound } from "@/lib/sound";
+import { COMPUTER_FOCUS, releaseComputerFocus } from "@/lib/computer-focus";
 import {
   advanceKonami,
   createKonamiState,
@@ -238,16 +239,24 @@ export function SecretComputerDeck({
     (index: number, focus = false) => {
       if (busy.current || !state.current.unlocked) return;
       const next = Math.max(0, Math.min(destinations.length - 1, index));
+      if (!focus)
+        releaseComputerFocus(
+          cards.current[activeRef.current],
+          document.activeElement,
+          dialog.current,
+        );
       activeRef.current = next;
       setActive(next);
       scenes.current.forEach((scene, index) => scene?.setActive?.(index === next));
       preview.current = true;
       clearTimeout(previewTimer.current);
       updateScreens();
-      if (focus)
-        cards.current[next]
-          ?.querySelector<HTMLButtonElement>("[data-computer-enter]")
-          ?.focus({ preventScroll: true });
+      if (focus) {
+        const target =
+          cards.current[next]?.querySelector<HTMLButtonElement>("[data-computer-enter]");
+        if (target && !target.disabled) target.focus({ preventScroll: true });
+        else dialog.current?.focus({ preventScroll: true });
+      }
     },
     [updateScreens],
   );
@@ -403,6 +412,12 @@ export function SecretComputerDeck({
       tabIndex={-1}
       aria-modal="true"
       aria-label={code.unlocked ? "Choose a computer" : "Enter Matt’s portfolio"}
+      onFocusCapture={(event) => {
+        if (!(event.target instanceof Element) || !event.target.matches(".computer-screen-hit"))
+          return;
+        if (!cards.current[activeRef.current]?.contains(event.target))
+          dialog.current?.focus({ preventScroll: true });
+      }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -460,6 +475,8 @@ export function SecretComputerDeck({
       onPointerDown={(event) => {
         if (!(event.target instanceof Element) || !event.target.closest(".secret-computer-card"))
           return;
+        const focusedCard = cards.current.find((card) => card?.contains(document.activeElement));
+        releaseComputerFocus(focusedCard, document.activeElement, dialog.current);
         // Suppress only the click from the drag that just ended. A new
         // physical press is a fresh intention, including an immediate tap.
         if (activeRef.current !== 0) suppressClickUntil.current = 0;
@@ -525,6 +542,7 @@ export function SecretComputerDeck({
             className={`secret-computer-card${index === active ? " active" : ""}`}
             data-computer-entrance
             data-kind={destination.kind}
+            data-focus-style={COMPUTER_FOCUS[destination.kind]}
             data-case-baked={destination.kind === "references" ? "true" : undefined}
             inert={!code.unlocked && index !== 0}
             onClick={(event) => {

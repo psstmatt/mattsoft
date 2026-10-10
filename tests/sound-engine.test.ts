@@ -2,8 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { createSoundPlayer } from "../src/lib/sound-engine";
 
 function audio(state = "running") {
-  let resolveResume = () => {};
-  let rejectResume = () => {};
+  const resumeRequests: { resolve: () => void; reject: () => void }[] = [];
+  const stateListeners = new Set<() => void>();
   const oscillators: {
     frequency: number;
     stops: (number | undefined)[];
@@ -19,9 +19,14 @@ function audio(state = "running") {
     resume() {
       resumes++;
       return new Promise<void>((resolve, reject) => {
-        resolveResume = resolve;
-        rejectResume = () => reject(new Error("Blocked"));
+        resumeRequests.push({ resolve, reject: () => reject(new Error("Blocked")) });
       });
+    },
+    addEventListener(event: string, listener: () => void) {
+      if (event === "statechange") stateListeners.add(listener);
+    },
+    removeEventListener(event: string, listener: () => void) {
+      if (event === "statechange") stateListeners.delete(listener);
     },
     close() {
       closes++;
@@ -72,8 +77,13 @@ function audio(state = "running") {
     oscillators,
     resumes: () => resumes,
     closes: () => closes,
-    resolve: () => resolveResume(),
-    reject: () => rejectResume(),
+    resolve: (index = resumeRequests.length - 1) => resumeRequests[index]?.resolve(),
+    reject: (index = resumeRequests.length - 1) => resumeRequests[index]?.reject(),
+    changeState(next: string) {
+      context.state = next;
+      stateListeners.forEach((listener) => listener());
+    },
+    listeners: () => stateListeners.size,
     factory: () => context as unknown as AudioContext,
   };
 }
@@ -83,6 +93,26 @@ const flush = async () => {
 };
 
 describe("computer audio lifecycle", () => {
+  it("prepares audio without resuming or making a sound before screen-on", () => {
+    const a = audio("suspended");
+    let created = 0;
+    const player = createSoundPlayer(() => {
+      created++;
+      return a.factory();
+    });
+    expect(player.isEnabled()).toBe(true);
+    player.prepare();
+    player.prepare();
+    expect(created).toBe(1);
+    expect(a.resumes()).toBe(0);
+    expect(a.oscillators).toHaveLength(0);
+    // Browsers initialize an autoplay-permitted context asynchronously.
+    a.changeState("running");
+    expect(a.oscillators).toHaveLength(0);
+    player.play("power");
+    player.play("power");
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([330]);
+  });
   it("drops an autoplay-blocked power chime without resuming or queuing it", () => {
     const a = audio("suspended");
     const player = createSoundPlayer(a.factory);
@@ -128,18 +158,24 @@ describe("computer audio lifecycle", () => {
     await flush();
     expect(a.oscillators).toHaveLength(1);
   });
-  it("creates the first tap context synchronously instead of reusing blocked startup", () => {
+  it("resumes blocked startup synchronously from the first tap without replacing it", async () => {
     const blocked = audio("suspended");
-    const tapped = audio("running");
-    let gesture = false;
-    const player = createSoundPlayer(() => (gesture ? tapped.factory() : blocked.factory()));
+    let created = 0;
+    const player = createSoundPlayer(() => {
+      created++;
+      return blocked.factory();
+    });
+    player.prepare();
     player.play("power");
-    gesture = true;
     player.play("computer-click", true);
-    expect(blocked.closes()).toBe(1);
-    expect(blocked.resumes()).toBe(0);
+    expect(created).toBe(1);
+    expect(blocked.closes()).toBe(0);
+    expect(blocked.resumes()).toBe(1);
     expect(blocked.oscillators).toHaveLength(0);
-    expect(tapped.oscillators.map((o) => o.frequency)).toEqual([1400]);
+    blocked.changeState("running");
+    blocked.resolve();
+    await flush();
+    expect(blocked.oscillators.map((o) => o.frequency)).toEqual([1400]);
   });
   for (const state of ["interrupted", "closed"]) {
     it(`replaces a ${state} context on the next activation`, () => {
@@ -152,6 +188,7 @@ describe("computer audio lifecycle", () => {
       player.play("computer-click", true);
       expect(created).toBe(2);
       expect(next.oscillators).toHaveLength(1);
+      expect(old.listeners()).toBe(0);
     });
   }
   it("resets hover throttling when recovery creates a new audio clock", () => {
@@ -226,6 +263,20 @@ describe("computer audio lifecycle", () => {
     await flush();
     expect(a.oscillators).toHaveLength(0);
   });
+  it("retries a rejected resume in a later gesture using the same context", async () => {
+    const a = audio("suspended");
+    const player = createSoundPlayer(a.factory);
+    player.play("click", true);
+    a.reject();
+    await flush();
+    player.play("click", true);
+    expect(a.resumes()).toBe(2);
+    expect(a.closes()).toBe(0);
+    a.changeState("running");
+    a.resolve();
+    await flush();
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([420]);
+  });
   it("prevents an early entry from producing a later power-on chime", () => {
     const a = audio();
     const player = createSoundPlayer(a.factory);
@@ -241,10 +292,51 @@ describe("computer audio lifecycle", () => {
     expect(a.oscillators[0].stops).toContain(undefined);
     player.dispose();
     expect(a.closes()).toBe(1);
+    expect(a.listeners()).toBe(0);
   });
 });
 
 describe("Konami feedback shares the existing audio lifetime", () => {
+  it("plays the first key after blocked startup without replaying boot", async () => {
+    const a = audio("suspended");
+    const player = createSoundPlayer(a.factory, true, () => 0);
+    player.prepare();
+    player.play("power");
+    player.konamiFeedback("↑", true, 360);
+    expect(a.resumes()).toBe(1);
+    expect(a.closes()).toBe(0);
+    a.changeState("running");
+    a.resolve();
+    await flush();
+    player.play("power");
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([392, 105]);
+  });
+  it("keeps one starting context through rapid keys and emits only the latest feedback", async () => {
+    const a = audio("suspended");
+    let created = 0;
+    let time = 0;
+    const player = createSoundPlayer(
+      () => {
+        created++;
+        return a.factory();
+      },
+      true,
+      () => time,
+    );
+    player.prepare();
+    for (const symbol of ["↑", "↑", "↓", "↓", "←", "→", "←", "→", "B"]) {
+      player.konamiFeedback(symbol, true, 360);
+      time += 20;
+    }
+    expect(created).toBe(1);
+    expect(a.closes()).toBe(0);
+    expect(a.resumes()).toBe(9);
+    a.changeState("running");
+    // Resolve out of order to cover callbacks from superseded gestures.
+    for (let i = 8; i >= 0; i--) a.resolve(i);
+    await flush();
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([440, 105]);
+  });
   it("uses one context for boot, movement and landing", () => {
     const a = audio();
     let created = 0;
@@ -304,17 +396,58 @@ describe("Konami feedback shares the existing audio lifetime", () => {
   });
   it("lets a newer unlock supersede a pending gesture without stale notes", async () => {
     const pending = audio("suspended");
-    const ready = audio();
     let calls = 0;
-    const player = createSoundPlayer(() => (++calls === 1 ? pending.factory() : ready.factory()));
+    const player = createSoundPlayer(() => {
+      calls++;
+      return pending.factory();
+    });
     player.konamiFeedback("↑", true);
     player.konamiUnlock();
-    pending.context.state = "running";
-    pending.resolve();
+    expect(calls).toBe(1);
+    expect(pending.resumes()).toBe(2);
+    pending.changeState("running");
+    pending.resolve(0);
     await flush();
     expect(pending.oscillators).toHaveLength(0);
-    expect(ready.oscillators).toHaveLength(4);
-    expect(pending.closes()).toBe(1);
+    pending.resolve(1);
+    await flush();
+    expect(pending.oscillators).toHaveLength(4);
+    expect(pending.closes()).toBe(0);
+  });
+  it("allows a fresh key after cancellation without reviving earlier feedback", async () => {
+    const a = audio("suspended");
+    const player = createSoundPlayer(a.factory, true, () => 0);
+    player.konamiFeedback("↑", true);
+    player.stop();
+    player.konamiFeedback("↓", true);
+    a.changeState("running");
+    a.resolve(0);
+    a.resolve(1);
+    await flush();
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([196, 105]);
+    expect(a.closes()).toBe(0);
+  });
+  it("cancels scheduled notes at interruption and plays only fresh feedback after recovery", () => {
+    const a = audio();
+    const next = audio();
+    let created = 0;
+    const player = createSoundPlayer(() => (++created === 1 ? a.factory() : next.factory()));
+    player.konamiUnlock();
+    a.changeState("interrupted");
+    expect(a.oscillators.every((o) => o.stops.includes(undefined))).toBe(true);
+    player.konamiFeedback("A", true);
+    expect(a.closes()).toBe(1);
+    expect(next.oscillators.map((o) => o.frequency)).toEqual([523, 105]);
+  });
+  it("drops a pending unlock when its context is interrupted before resume settles", async () => {
+    const a = audio("suspended");
+    const player = createSoundPlayer(a.factory, true, () => 0);
+    player.konamiUnlock();
+    a.changeState("interrupted");
+    a.changeState("running");
+    a.resolve();
+    await flush();
+    expect(a.oscillators).toHaveLength(0);
   });
   it("keeps mistake feedback short and disposal cancels every voice", () => {
     const a = audio();
