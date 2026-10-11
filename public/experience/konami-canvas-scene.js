@@ -2,9 +2,20 @@ import { captureScreenSource, previewSampleHeight } from "./konami-screen-source
 import { fittedPortfolioFrame, paintPortfolioFrame } from "./konami-page-projection.js?v=33";
 import { zoomCanvasToScreen } from "./konami-canvas-entry.js?v=33";
 import { applyComputerLayout } from "./konami-layout.js";
+import {
+  mountComputerPointer,
+  pointerComputerPose,
+  pointInsidePolygon,
+} from "./konami-pointer.js?v=54";
 import { awaitCaptureReady } from "./computer-snapshot.js";
 import { greenPlastic } from "./computer-material.js";
 import { rasterPreview } from "./konami-raster.js?v=24";
+import {
+  referenceAngleBank,
+  validateAngleBank,
+  pointerCameraRequest,
+  createCanvasAngleBank,
+} from "./konami-angle-bank.js?v=60";
 import {
   INFLATABLE_ASSET,
   inflatableScreenGeometry,
@@ -16,6 +27,7 @@ import {
   portfolioPageBox,
   previewScroll,
   createPreviewTimeline,
+  runEntryTransition,
 } from "./konami-transition.js?v=33";
 
 import {
@@ -25,6 +37,7 @@ import {
   prepareSonarBody,
   sonarInteractionTarget,
   easeSonarInteraction,
+  sonarGroovePixel,
 } from "./sonar-registration.js?v=50";
 
 const ROOT = "/experience/models/ivory-classic/frames/";
@@ -96,13 +109,14 @@ export function portfolioRasterSample(bounds, width, height, page, scroll = 0) {
 export async function mountCanvasComputer(
   element,
   signal,
-  { initiallyVisible = true, entryMotion = "standard" } = {},
+  { initiallyVisible = true, entryMotion = "standard", angleBankUrl = null } = {},
 ) {
   const stage = element.querySelector("[data-computer-stage]");
   const button = element.querySelector("[data-computer-enter]");
   const kind = element.dataset.kind || "portfolio";
   const inflatable = kind === "scout";
   const sonar = kind === "anduril";
+  const factory = element.dataset.focusStyle === "factory";
   const label = sonar ? element.querySelector(".secret-computer-label") : null;
   const heading = label?.querySelector("h2");
   const rig = sonar ? element.querySelector(".secret-computer-rig") : null;
@@ -141,7 +155,14 @@ export async function mountCanvasComputer(
     body,
     darkBody,
     sonarActiveBody,
-    sonarHitPixels,
+    hitPixels,
+    pointer,
+    angleBank,
+    bankDefinition,
+    bankFrame,
+    legacyBank = false,
+    basePose,
+    inputDirty = false,
     sonarEmission = 0,
     sonarLift = 0,
     interactionTime = 0,
@@ -155,7 +176,7 @@ export async function mountCanvasComputer(
   let previousWidth = 0,
     previousHeight = 0,
     labelCeiling = Infinity;
-  const images = [];
+  const images = new Set();
   const dispose = () => {
     if (disposed) return;
     disposed = true;
@@ -166,6 +187,8 @@ export async function mountCanvasComputer(
     signal?.removeEventListener("abort", abort);
     resize?.disconnect();
     themeObserver?.disconnect();
+    pointer?.dispose();
+    angleBank?.dispose();
     canvas?.remove();
     for (const image of images) image.src = "";
   };
@@ -173,11 +196,114 @@ export async function mountCanvasComputer(
   async function image(src) {
     s.throwIfAborted();
     const im = new Image();
-    images.push(im);
+    images.add(im);
     im.src = src;
-    await awaitCaptureReady(im.decode(), s, 12000);
-    s.throwIfAborted();
-    return im;
+    try {
+      await awaitCaptureReady(im.decode(), s, 12000);
+      s.throwIfAborted();
+      return im;
+    } catch (error) {
+      releaseImage(im);
+      throw error;
+    }
+  }
+  function releaseImage(im) {
+    if (!images.delete(im)) return;
+    im.src = "";
+  }
+  function releaseBankFrame(frame) {
+    for (const im of frame.images || []) releaseImage(im);
+  }
+  function readHitPixels(source, size) {
+    const hitCanvas = document.createElement("canvas");
+    hitCanvas.width = hitCanvas.height = size;
+    const context = hitCanvas.getContext("2d");
+    context.drawImage(source, 0, 0, size, size);
+    return context.getImageData(0, 0, size, size).data;
+  }
+  function prepareBankSonarBody(source, strength) {
+    const prepared = document.createElement("canvas"),
+      n = bankDefinition.width;
+    prepared.width = prepared.height = n;
+    const context = prepared.getContext("2d");
+    context.drawImage(source, 0, 0, n, n);
+    const pixels = context.getImageData(0, 0, n, n);
+    for (let index = 0; index < pixels.data.length; index += 4) {
+      const point = index / 4,
+        pixel = sonarGroovePixel(
+          ...pixels.data.subarray(index, index + 4),
+          (point % n) / n,
+          Math.floor(point / n) / n,
+          strength,
+        );
+      pixels.data.set(pixel, index);
+    }
+    context.putImageData(pixels, 0, 0);
+    return prepared;
+  }
+  async function loadBankFrame(descriptor, id) {
+    const resolve = (path) => {
+      if (!angleBankUrl) return path;
+      const base = new URL(angleBankUrl, globalThis.location?.href || "https://prototype.invalid"),
+        url = new URL(path, base);
+      if (url.origin !== base.origin)
+        throw new Error("Angle assets must share their manifest origin");
+      return url.href;
+    };
+    const paths = [
+      ...new Set([
+        descriptor.case,
+        descriptor.glass,
+        descriptor.coverage || descriptor.case,
+        ...(descriptor.activeCase ? [descriptor.activeCase] : []),
+      ]),
+    ];
+    const loaded = await Promise.allSettled(paths.map((path) => image(resolve(path))));
+    const frameImages = loaded
+      .filter((item) => item.status === "fulfilled")
+      .map((item) => item.value);
+    const failure = loaded.find((item) => item.status === "rejected");
+    if (
+      failure ||
+      frameImages.some((im, index) => {
+        // The audited layers share normalized framing at different native
+        // resolutions. Keep the full 1024px center case for sticker crops.
+        const size = legacyBank
+          ? paths[index] === descriptor.case
+            ? 1024
+            : paths[index] === descriptor.glass
+              ? 480
+              : 960
+          : bankDefinition.width;
+        return im.naturalWidth !== size || im.naturalHeight !== size;
+      })
+    ) {
+      frameImages.forEach(releaseImage);
+      throw (
+        failure?.reason || new Error(`Angle frame ${id} dimensions do not match its registration`)
+      );
+    }
+    const byPath = new Map(paths.map((path, index) => [path, loaded[index].value])),
+      rawBody = byPath.get(descriptor.case);
+    return {
+      id,
+      meta: {
+        width: bankDefinition.width,
+        height: bankDefinition.height,
+        topology: bankDefinition.topology,
+        frame: descriptor,
+      },
+      body: rawBody,
+      activeBody: sonar
+        ? factory
+          ? rawBody
+          : byPath.get(descriptor.activeCase) || prepareBankSonarBody(rawBody, 1)
+        : null,
+      coverage: byPath.get(descriptor.coverage || descriptor.case),
+      glass: byPath.get(descriptor.glass),
+      hitPixels: readHitPixels(rawBody, bankDefinition.width),
+      images: frameImages,
+    };
   }
   try {
     s.throwIfAborted();
@@ -210,24 +336,42 @@ export async function mountCanvasComputer(
         : captureScreenSource({ signal: s, kind }),
     ]);
     s.throwIfAborted();
-    if (inflatable) {
+    if (kind === "references") {
+      bankDefinition = referenceAngleBank(meta);
+      legacyBank = true;
+    }
+    // New character banks are opt-in until their generated artwork and matched
+    // screen meshes have passed review. A failed bank leaves the approved pose.
+    if (angleBankUrl && kind !== "portfolio") {
+      try {
+        const bankResponse = await awaitCaptureReady(fetch(angleBankUrl, { signal: s }), s, 12000);
+        if (!bankResponse.ok) throw new Error("Angle bank manifest unavailable");
+        bankDefinition = validateAngleBank(await bankResponse.json());
+        legacyBank = false;
+        bankFrame = await loadBankFrame(bankDefinition.frames["1-9"], "1-9");
+        for (const im of new Set([body, coverage, glass])) releaseImage(im);
+        ({ meta, body, coverage, glass, hitPixels, activeBody: sonarActiveBody } = bankFrame);
+      } catch (error) {
+        s.throwIfAborted();
+        bankDefinition = kind === "references" ? referenceAngleBank(meta) : null;
+        legacyBank = kind === "references";
+        element.dataset.angleBankStatus = "fallback";
+      }
+    }
+    hitPixels ||= readHitPixels(body, meta.width);
+    if (inflatable && !bankFrame) {
       const originalMeta = meta;
       meta = inflatableScreenGeometry(originalMeta);
       glass = fitInflatableGlass(glass, originalMeta, meta);
       coverage = body;
     }
-    if (sonar) {
+    if (sonar && !bankFrame) {
       const originalMeta = meta;
       meta = sonarScreenGeometry(originalMeta);
       glass = fitInflatableGlass(glass, originalMeta, meta);
       const imageBody = body;
       body = prepareSonarBody(imageBody, meta, 0);
       sonarActiveBody = prepareSonarBody(imageBody, meta, 1);
-      const hitCanvas = document.createElement("canvas");
-      hitCanvas.width = hitCanvas.height = meta.width;
-      const hitContext = hitCanvas.getContext("2d");
-      hitContext.drawImage(imageBody, 0, 0, meta.width, meta.width);
-      sonarHitPixels = hitContext.getImageData(0, 0, meta.width, meta.width).data;
       coverage = body;
     }
     if (kind === "portfolio") {
@@ -276,15 +420,61 @@ export async function mountCanvasComputer(
     composite = make();
     const screen = make(),
       reflection = make();
-    const points = meta.frame.screenBoundary || meta.frame.screenQuad;
-    const xs = meta.frame.screenMesh.map((p) => p[0] / meta.width);
-    const ys = meta.frame.screenMesh.map((p) => p[1] / meta.width);
-    const bounds = {
-      x0: Math.min(...xs),
-      y0: Math.min(...ys),
-      x1: Math.max(...xs),
-      y1: Math.max(...ys),
-    };
+    let points, bounds;
+    function updateGeometry() {
+      points = meta.frame.screenBoundary || meta.frame.screenQuad;
+      const xs = meta.frame.screenMesh.map((p) => p[0] / meta.width),
+        ys = meta.frame.screenMesh.map((p) => p[1] / meta.width);
+      bounds = {
+        x0: Math.min(...xs),
+        y0: Math.min(...ys),
+        x1: Math.max(...xs),
+        y1: Math.max(...ys),
+      };
+    }
+    function selectBankFrame(next) {
+      if (next !== bankFrame) {
+        bankFrame = next;
+        ({ meta, body, coverage, glass, hitPixels, activeBody: sonarActiveBody } = bankFrame);
+        updateGeometry();
+        dirty = true;
+      }
+      element.dataset.cameraFrame = bankFrame.id;
+    }
+    updateGeometry();
+    if (bankDefinition) {
+      bankFrame ||= {
+        id: "1-9",
+        meta,
+        body,
+        coverage,
+        glass,
+        hitPixels,
+        images: [body, coverage, glass],
+      };
+      angleBank = createCanvasAngleBank({
+        definition: bankDefinition,
+        initial: bankFrame,
+        loadFrame: loadBankFrame,
+        releaseFrame: releaseBankFrame,
+        onChange() {
+          if (
+            disposed ||
+            entering ||
+            !active ||
+            !visible ||
+            document.hidden ||
+            reduced.matches ||
+            pointer?.inView === false
+          )
+            return;
+          inputDirty = true;
+          schedule();
+        },
+      });
+      element.dataset.angleBankStatus = "ready";
+      element.dataset.cameraFrame = "1-9";
+    }
     function rebuild(width, height, scroll) {
       const n = meta.width,
         x = screen.getContext("2d");
@@ -330,13 +520,25 @@ export async function mountCanvasComputer(
         active &&
         visible &&
         !document.hidden &&
+        pointer?.inView !== false &&
         !reduced.matches &&
         overlay === page &&
         previewSampleHeight(page, kind !== "portfolio", stage.clientHeight) < 1
       );
     }
     function sonarSettling() {
-      if (!sonar || disposed || entering || !visible || document.hidden) return false;
+      if (
+        !sonar ||
+        factory ||
+        disposed ||
+        entering ||
+        !active ||
+        !visible ||
+        document.hidden ||
+        pointer?.inView === false ||
+        reduced.matches
+      )
+        return false;
       const target = sonarInteractionTarget(active, hovered, focused, reduced.matches);
       return (
         Math.abs(target.emission - sonarEmission) > 0.002 ||
@@ -351,25 +553,50 @@ export async function mountCanvasComputer(
     }
     function schedule() {
       previewTimeline.setRunning(canAnimate(), performance.now());
-      if (!animationFrame && (canAnimate() || sonarSettling()))
+      const canPaint =
+        !disposed && !entering && visible && !document.hidden && pointer?.inView !== false;
+      if (!canPaint) {
+        angleBank?.pause();
+        cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+      } else if (
+        !animationFrame &&
+        (inputDirty || canAnimate() || sonarSettling() || pointer?.settling)
+      )
         animationFrame = requestAnimationFrame(tick);
     }
     function tick(now) {
       animationFrame = 0;
-      if (!canAnimate() && !sonarSettling()) {
+      if (!inputDirty && !canAnimate() && !sonarSettling() && !pointer?.settling) {
         previewTimeline.setRunning(false, now);
         return;
       }
       // Prepared page sampling is smooth at 20 fps without rasterizing a whole
       // desktop-sized computer on every phone display refresh.
-      if (sonarSettling() || now - lastPaint >= 50) render(now);
+      if (inputDirty || pointer?.settling || sonarSettling() || now - lastPaint >= 50) render(now);
       schedule();
     }
     function render(now = performance.now()) {
       if (disposed || entering) return;
+      inputDirty = false;
       const w = stage.clientWidth,
         h = stage.clientHeight;
       if (!w || !h) return;
+      const pointerSample = pointer?.sample(now) || { x: 0, y: 0 };
+      if (angleBank) {
+        const camera = pointerCameraRequest(pointerSample, bankDefinition),
+          next = angleBank.select(
+            camera,
+            active &&
+              visible &&
+              !document.hidden &&
+              !reduced.matches &&
+              pointer?.inView !== false &&
+              pointer?.hovered,
+          );
+        element.dataset.cameraRequest = `${camera.row.toFixed(3)}-${camera.column.toFixed(3)}`;
+        selectBankFrame(next);
+      }
       if (sonarPages) {
         const responsivePage = globalThis.innerWidth <= 700 ? sonarPages.narrow : sonarPages.wide;
         if (page !== responsivePage) {
@@ -381,19 +608,21 @@ export async function mountCanvasComputer(
       }
       previewTimeline.setRunning(canAnimate(), now);
       if (sonar) {
-        const target = sonarInteractionTarget(active, hovered, focused, reduced.matches);
+        const target = factory
+          ? { emission: 0, lift: 0 }
+          : sonarInteractionTarget(active, hovered, focused, reduced.matches);
         const elapsed = interactionTime ? Math.min(now - interactionTime, 80) : 16;
         sonarEmission = easeSonarInteraction(
           sonarEmission,
           target.emission,
           elapsed,
-          reduced.matches,
+          reduced.matches || !active,
         );
         sonarLift = easeSonarInteraction(
           sonarLift,
           reduced.matches ? 0 : target.lift,
           elapsed,
-          reduced.matches,
+          reduced.matches || !active,
         );
         interactionTime = now;
       }
@@ -406,7 +635,7 @@ export async function mountCanvasComputer(
             )
           : 0;
       const scroll =
-        sonar && lastScroll >= 0 && now - lastSourcePaint < 50 ? lastScroll : desiredScroll;
+        canAnimate() && lastScroll >= 0 && now - lastSourcePaint < 50 ? lastScroll : desiredScroll;
       if (scroll !== lastScroll) dirty = true;
       lastScroll = scroll;
       element.dataset.previewScroll = scroll.toFixed(6);
@@ -425,12 +654,13 @@ export async function mountCanvasComputer(
       const x = canvas.getContext("2d");
       x.setTransform(dpr, 0, 0, dpr, 0, 0);
       x.clearRect(0, 0, w, h);
-      const standardPose = applyComputerLayout(element, w, h),
-        pose = sonar
-          ? sonarPose(standardPose)
-          : inflatable
-            ? inflatablePose(standardPose)
-            : standardPose,
+      const standardPose = applyComputerLayout(element, w, h);
+      basePose = sonar
+        ? sonarPose(standardPose)
+        : inflatable
+          ? inflatablePose(standardPose)
+          : standardPose;
+      const pose = angleBank ? { ...basePose } : pointerComputerPose(basePose, pointerSample),
         size = pose.s;
       if (sonar) {
         const bodyWidth = size * 0.8652;
@@ -489,36 +719,37 @@ export async function mountCanvasComputer(
       previewTimeline.setRunning(false, performance.now());
       render();
     };
-    if (sonar) {
-      const setHovered = (value) => {
-        if (hovered === value) return;
-        hovered = value;
-        element.dataset.sonarHovered = String(value);
-        render();
-      };
-      element.addEventListener(
-        "pointermove",
-        (event) => {
-          if (event.pointerType !== "mouse" || !layout || entering) return;
-          const rect = canvas.getBoundingClientRect();
-          const px =
-            (((event.clientX - rect.left) * stage.clientWidth) / rect.width - layout.x) /
-            layout.size;
-          const py =
-            (((event.clientY - rect.top) * stage.clientHeight) / rect.height - layout.y) /
-            layout.size;
-          const ix = Math.floor(px * meta.width),
-            iy = Math.floor(py * meta.width);
-          setHovered(
-            ix >= 0 &&
-              ix < meta.width &&
-              iy >= 0 &&
-              iy < meta.width &&
-              sonarHitPixels[(iy * meta.width + ix) * 4 + 3] > 128,
-          );
-        },
-        { signal: s },
-      );
+    pointer = mountComputerPointer({
+      element,
+      canvas,
+      stage,
+      signal: s,
+      getPose: () => basePose,
+      isAvailable: () => active && visible && !disposed && !entering,
+      hitTest(point) {
+        if (!layout) return false;
+        const px = ((point.x - layout.x) * meta.width) / layout.size;
+        const py = ((point.y - layout.y) * meta.width) / layout.size;
+        const ix = Math.floor(px),
+          iy = Math.floor(py);
+        return (
+          pointInsidePolygon({ x: px, y: py }, points) ||
+          (ix >= 0 &&
+            ix < meta.width &&
+            iy >= 0 &&
+            iy < meta.width &&
+            hitPixels[(iy * meta.width + ix) * 4 + 3] > 128)
+        );
+      },
+      onChange() {
+        hovered = pointer.hovered;
+        if (sonar) element.dataset.sonarHovered = String(hovered);
+        if (factory && reduced.matches) return;
+        inputDirty = true;
+        schedule();
+      },
+    });
+    if (sonar && !factory) {
       button.addEventListener(
         "focus",
         () => {
@@ -532,13 +763,6 @@ export async function mountCanvasComputer(
         () => {
           focused = false;
           render();
-        },
-        { signal: s },
-      );
-      element.addEventListener(
-        "pointerleave",
-        () => {
-          setHovered(false);
         },
         { signal: s },
       );
@@ -567,6 +791,7 @@ export async function mountCanvasComputer(
         canvas.style.cssText = idleCanvasStyle;
         button.style.pointerEvents = "";
         entering = false;
+        pointer.reset(true, false);
         previewTimeline = createPreviewTimeline();
         lastScroll = -1;
         overlay = page;
@@ -576,6 +801,8 @@ export async function mountCanvasComputer(
       setActive(value) {
         if (disposed || entering || active === !!value) return;
         active = !!value;
+        pointer.reset(true, false);
+        hovered = false;
         if (sonar && !active) {
           hovered = false;
           focused = false;
@@ -586,6 +813,8 @@ export async function mountCanvasComputer(
       setVisible(value) {
         if (disposed || entering) return;
         visible = !!value;
+        pointer.reset(true, false);
+        hovered = false;
         canvas.style.visibility = visible ? "visible" : "hidden";
         resume();
       },
@@ -603,6 +832,11 @@ export async function mountCanvasComputer(
         dirty = true;
         render();
         entering = true;
+        angleBank?.pause();
+        // Keep layout from the last painted pointer pose for frame zero. Only
+        // clear input state; the approved entry starts from that exact pose.
+        pointer.reset(true, false);
+        hovered = false;
         cancelAnimationFrame(animationFrame);
         animationFrame = 0;
         previewTimeline.setRunning(false, performance.now());
@@ -616,26 +850,68 @@ export async function mountCanvasComputer(
           const abortEntry = () => controller.abort(s.reason);
           s.addEventListener("abort", abortEntry, { once: true });
           if (s.aborted) abortEntry();
-          let entryBody = body;
-          if (sonar) {
-            entryBody = make();
-            paintSonarBody(entryBody.getContext("2d"), { x: 0, y: 0, s: meta.width });
-          }
-          entryTask = characterEntry.playCharacterEntry({
-            canvas,
-            body: entryBody,
-            coverage,
-            glass: reflection,
-            page,
-            meta,
-            pose: { x: layout.x, y: layout.y, s: layout.size },
-            width: stageWidth,
-            height: stageHeight,
-            kind,
-            style: entryMotion,
-            scrollStart,
-            signal: controller.signal,
-          });
+          entryTask = (async () => {
+            // The References stickers were measured on the center artwork.
+            // Return the entire registered camera view before those crops lift
+            // off; the first frame remains exactly the clicked view.
+            if (
+              kind === "references" &&
+              entryMotion === "absurd" &&
+              angleBank &&
+              bankFrame.id !== "1-9"
+            ) {
+              element.dataset.cameraRecentering = "true";
+              try {
+                const frames = await awaitCaptureReady(
+                  angleBank.prepareCenter(controller.signal),
+                  controller.signal,
+                  12000,
+                );
+                controller.signal.throwIfAborted();
+                await runEntryTransition({
+                  duration: reduced.matches ? 0 : 220,
+                  signal: controller.signal,
+                  frame(progress) {
+                    const eased = progress * progress * (3 - 2 * progress),
+                      frame = frames[Math.round(eased * (frames.length - 1))];
+                    if (frame === bankFrame) return;
+                    selectBankFrame(frame);
+                    rebuild(stageWidth, stageHeight, scrollStart);
+                    const ctx = canvas.getContext("2d"),
+                      dpr = Math.min(devicePixelRatio || 1, 2);
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.clearRect(0, 0, stageWidth, stageHeight);
+                    ctx.drawImage(composite, layout.x, layout.y, layout.size, layout.size);
+                  },
+                });
+                angleBank.select(bankDefinition.center, false);
+              } finally {
+                element.dataset.cameraRecentering = "false";
+                angleBank.releaseCenter();
+              }
+            }
+            controller.signal.throwIfAborted();
+            let entryBody = body;
+            if (sonar) {
+              entryBody = make();
+              paintSonarBody(entryBody.getContext("2d"), { x: 0, y: 0, s: meta.width });
+            }
+            await characterEntry.playCharacterEntry({
+              canvas,
+              body: entryBody,
+              coverage,
+              glass: reflection,
+              page,
+              meta,
+              pose: { x: layout.x, y: layout.y, s: layout.size },
+              width: stageWidth,
+              height: stageHeight,
+              kind,
+              style: entryMotion,
+              scrollStart,
+              signal: controller.signal,
+            });
+          })();
           try {
             await entryTask;
           } finally {

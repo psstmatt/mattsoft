@@ -7,9 +7,13 @@ import {
   type CSSProperties,
 } from "react";
 import { useReducedMotion } from "motion/react";
-import { SonarCaption } from "./sonar-caption";
 import { useSound } from "@/lib/sound";
-import { COMPUTER_FOCUS, releaseComputerFocus } from "@/lib/computer-focus";
+import { releaseComputerFocus } from "@/lib/computer-focus";
+import { restoreComputerSurfaces } from "@/lib/computer-recovery";
+import { SonarCaption } from "./sonar-caption";
+import { type FactorySnapshot } from "@/lib/factory-session";
+import "./factory-computers.css";
+import { listenForDeckEscape } from "@/lib/factory-escape";
 import {
   advanceKonami,
   createKonamiState,
@@ -40,6 +44,7 @@ type SceneOptions = {
   material?: "inflatable";
   initiallyVisible?: boolean;
   entryMotion?: "absurd";
+  angleBankUrl?: string;
 };
 type SceneModule = {
   mountComputer: (
@@ -86,8 +91,8 @@ const destinations = [
   },
 ] as const;
 const paths = {
-  computer: "/experience/konami-computer-scene.js?v=ship-absurd-1",
-  canvas: "/experience/konami-canvas-scene.js?v=sonar-53",
+  computer: "/experience/konami-computer-scene.js?v=factory-60",
+  canvas: "/experience/konami-canvas-scene.js?v=factory-60",
   material: "/experience/computer-material.js?v=2",
   transition: "/experience/computer-transition.js?v=1",
 };
@@ -95,9 +100,15 @@ const paths = {
 export function SecretComputerDeck({
   surface,
   onComplete,
+  restoredFactory,
+  onFactoryChange,
+  onExternalEntry,
 }: {
   surface: RefObject<HTMLDivElement | null>;
   onComplete: () => void;
+  restoredFactory?: FactorySnapshot;
+  onFactoryChange: (snapshot: FactorySnapshot) => void;
+  onExternalEntry: () => void;
 }) {
   const { play, stop, konamiFeedback, konamiUnlock } = useSound();
   const material = "inflatable";
@@ -116,15 +127,21 @@ export function SecretComputerDeck({
   } | null>(null);
   const controllers = useRef<(AbortController | null)[]>(destinations.map(() => null));
   const alive = useRef(false);
-  const [, setReadyCount] = useState(0);
+  const [readyCount, setReadyCount] = useState(0);
   const busy = useRef(false);
   const entryAttempt = useRef(0);
   const restoring = useRef(false);
   const restoreFocus = useRef(false);
-  const state = useRef(createKonamiState("keyboard"));
-  const preview = useRef(false);
+  const announceRestoredReady = useRef(false);
+  const state = useRef(
+    restoredFactory?.unlocked
+      ? Object.freeze({ ...createKonamiState("keyboard"), unlocked: true })
+      : createKonamiState("keyboard"),
+  );
+  const preview = useRef(!!restoredFactory?.unlocked);
   const lastMove = useRef("");
-  const activeRef = useRef(0);
+  const initialActive = restoredFactory?.expanded ? restoredFactory.active : 0;
+  const activeRef = useRef(initialActive);
   const animation = useRef<Animation | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const suppressClickUntil = useRef(0);
@@ -132,41 +149,27 @@ export function SecretComputerDeck({
     null,
   );
   const [code, setCode] = useState(state.current);
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(initialActive);
+  const [collapsed, setCollapsed] = useState(restoredFactory ? !restoredFactory.expanded : false);
+  const expanded = code.unlocked && !collapsed;
+  useEffect(() => {
+    onFactoryChange({ unlocked: code.unlocked, active, expanded });
+  }, [onFactoryChange, code.unlocked, active, expanded]);
   const [entering, setEntering] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
-  const cancelEntry = useCallback(async () => {
-    if (restoring.current || activeRef.current === 0) return;
-    const scene = scenes.current[activeRef.current];
-    if (!scene?.resetEntry) return;
-    restoring.current = true;
-    ++entryAttempt.current;
-    stop();
-    try {
-      await scene.resetEntry();
-      if (!alive.current) return;
-      const card = cards.current[activeRef.current];
-      if (card) delete card.dataset["entering"];
-      busy.current = false;
-      suppressClickUntil.current = 0;
-      origin.current = null;
-      restoreFocus.current = true;
-      setEntering(false);
-      setAnnouncement(`${destinations[activeRef.current]?.label} ready to enter.`);
-    } finally {
-      restoring.current = false;
-    }
-  }, [stop]);
-
   useEffect(() => {
-    if (!entering && restoreFocus.current) {
+    if (!entering && restoreFocus.current && scenes.current[activeRef.current]) {
       restoreFocus.current = false;
+      if (announceRestoredReady.current) {
+        announceRestoredReady.current = false;
+        setAnnouncement(`${destinations[activeRef.current]?.label} ready to enter.`);
+      }
       cards.current[activeRef.current]
         ?.querySelector<HTMLButtonElement>("[data-computer-enter]")
         ?.focus({ preventScroll: true });
     }
-  }, [entering]);
+  }, [entering, collapsed, readyCount]);
 
   const updateScreens = useCallback(() => {
     const input: InputScreen = {
@@ -185,10 +188,24 @@ export function SecretComputerDeck({
     clearTimeout(previewTimer.current);
     animation.current?.cancel();
     animation.current = null;
-    controllers.current.forEach((controller) => controller?.abort());
+    const pending = controllers.current;
+    const retained = scenes.current;
     controllers.current = destinations.map(() => null);
-    scenes.current.forEach((scene) => scene?.dispose());
     scenes.current = destinations.map(() => null);
+    for (const controller of pending) {
+      try {
+        controller?.abort();
+      } catch {
+        /* Continue releasing other renderers. */
+      }
+    }
+    for (const scene of retained) {
+      try {
+        scene?.dispose();
+      } catch {
+        /* A failed renderer must not strand the deck. */
+      }
+    }
   }, []);
 
   const mount = useCallback(
@@ -207,12 +224,23 @@ export function SecretComputerDeck({
             })
             .catch(() => {});
       }
+      const angleBankUrl =
+        index === 1
+          ? "/experience/models/scout-inflatable-angles-v1/manifest.json"
+          : index === 3
+            ? "/experience/models/anduril-sonar-angles-v1/manifest.json"
+            : null;
+      const canvasOptions: SceneOptions = {
+        material,
+        entryMotion,
+        ...(angleBankUrl ? { angleBankUrl } : {}),
+      };
       let instance: Scene | null = null;
       try {
         if (index !== 0) {
           const module: CanvasModule = await import(/* @vite-ignore */ paths.canvas);
           if (signal.aborted) return;
-          instance = await module.mountCanvasComputer(card, signal, { material, entryMotion });
+          instance = await module.mountCanvasComputer(card, signal, canvasOptions);
         } else {
           const module: SceneModule = await import(/* @vite-ignore */ paths.computer);
           if (signal.aborted) return;
@@ -223,15 +251,15 @@ export function SecretComputerDeck({
           try {
             const module: CanvasModule = await import(/* @vite-ignore */ paths.canvas);
             if (!signal.aborted)
-              instance = await module.mountCanvasComputer(card, signal, { material, entryMotion });
+              instance = await module.mountCanvasComputer(card, signal, canvasOptions);
           } catch {
             if (!signal.aborted) card.dataset["fallback"] = "true";
           }
         }
       }
       if (!instance) return;
-      // Retain a neighboring machine that finishes loading during entry so
-      // cancelling leaves it prepared instead of stranding its controller.
+      // A neighboring machine may finish loading during the current entry.
+      // Retain it for an in-place replay instead of stranding its controller.
       if (signal.aborted || !alive.current) instance.dispose();
       else {
         scenes.current[index] = instance;
@@ -243,9 +271,40 @@ export function SecretComputerDeck({
     [updateScreens, material, entryMotion],
   );
 
+  // Every renderer has an abort/dispose lifecycle. Remounting uses that common
+  // contract instead of relying on character-only resetEntry support.
+  const cancelEntry = useCallback(async () => {
+    if (restoring.current || !alive.current) return;
+    restoring.current = true;
+    ++entryAttempt.current;
+    stop();
+    disposeScenes();
+    busy.current = false;
+    suppressClickUntil.current = 0;
+    origin.current = null;
+    preview.current = true;
+    document.documentElement.classList.remove("computer-handover");
+    document.documentElement.classList.add("computer-entry");
+    restoreComputerSurfaces({
+      dialog: dialog.current,
+      cards: cards.current,
+      surface: surface.current,
+    });
+    restoreFocus.current = true;
+    setEntering(false);
+    setAnnouncement(`${destinations[activeRef.current]?.label} ready to enter.`);
+    dialog.current?.focus({ preventScroll: true });
+    restoring.current = false;
+    void mount(0);
+    if (state.current.unlocked)
+      destinations.forEach((_, index) => {
+        if (index) void mount(index);
+      });
+  }, [stop, disposeScenes, surface, mount]);
+
   const select = useCallback(
     (index: number, focus = false) => {
-      if (busy.current || !state.current.unlocked) return;
+      if (busy.current || !state.current.unlocked || collapsed) return;
       const next = Math.max(0, Math.min(destinations.length - 1, index));
       if (!focus)
         releaseComputerFocus(
@@ -266,8 +325,16 @@ export function SecretComputerDeck({
         else dialog.current?.focus({ preventScroll: true });
       }
     },
-    [updateScreens],
+    [updateScreens, collapsed],
   );
+
+  const exitFactory = useCallback(() => {
+    if (busy.current) return;
+    select(0);
+    restoreFocus.current = true;
+    setCollapsed(true);
+    setAnnouncement("Back to the green computer. Your factory is still unlocked.");
+  }, [select]);
 
   const input = useCallback(
     (symbol: string, mode: KonamiMode) => {
@@ -285,6 +352,7 @@ export function SecretComputerDeck({
             ?.querySelector<HTMLElement>(".secret-computer-rig")
             ?.animate(motion.frames, { duration: motion.duration, easing: motion.easing }) ?? null;
       if (next.unlocked) {
+        setCollapsed(false);
         konamiUnlock();
         clearTimeout(previewTimer.current);
         previewTimer.current = setTimeout(() => {
@@ -313,10 +381,9 @@ export function SecretComputerDeck({
       }
       busy.current = true;
       const attempt = ++entryAttempt.current;
-      if (index !== 0) {
-        dialog.current?.focus({ preventScroll: true });
-        setAnnouncement(`Entering ${destinations[index]?.label}. Press Escape to return.`);
-      }
+      // Disabling the active button otherwise lets browser focus fall to body.
+      dialog.current?.focus({ preventScroll: true });
+      setAnnouncement(`Entering ${destinations[index]?.label}. Press Escape to return.`);
       setEntering(true);
       clearTimeout(previewTimer.current);
       animation.current?.cancel();
@@ -340,27 +407,44 @@ export function SecretComputerDeck({
               );
           }
         }
-      } catch (error) {
-        if (!alive.current || (error instanceof DOMException && error.name === "AbortError"))
-          return;
-        if (index !== 0) {
-          await cancelEntry();
-          if (alive.current)
-            setAnnouncement("The transition was interrupted. The computer is ready to try again.");
-          return;
-        }
+      } catch {
+        if (!alive.current || attempt !== entryAttempt.current) return;
+        await cancelEntry();
+        if (alive.current)
+          setAnnouncement("The transition was interrupted. The computer is ready to try again.");
+        return;
       }
       if (!alive.current || attempt !== entryAttempt.current) return;
       const destination = destinations[index];
+      onFactoryChange({
+        unlocked: state.current.unlocked,
+        active: index,
+        expanded: state.current.unlocked && !collapsed,
+      });
       if (index === 0 || skip) onComplete();
-      else if (destination?.url) window.location.assign(destination.url);
+      else if (destination?.url) {
+        onExternalEntry();
+        window.location.assign(destination.url);
+      }
     },
-    [onComplete, play, stop, reduced, surface, updateScreens, cancelEntry],
+    [
+      onComplete,
+      play,
+      stop,
+      reduced,
+      surface,
+      updateScreens,
+      cancelEntry,
+      onFactoryChange,
+      onExternalEntry,
+      collapsed,
+    ],
   );
 
   useEffect(() => {
     if (!document.documentElement.classList.contains("computer-entry")) return;
     alive.current = true;
+    const lifetime = entryAttempt;
     dialog.current?.focus({ preventScroll: true });
     const card = cards.current[0];
     const screenOn = () => {
@@ -375,11 +459,35 @@ export function SecretComputerDeck({
       }
     };
     const pagehide = () => {
+      ++entryAttempt.current;
       stop();
       disposeScenes();
     };
     const pageshow = (event: PageTransitionEvent) => {
-      if (event.persisted) onComplete();
+      if (!event.persisted) return;
+      // pagehide disposed the renderers. A restored factory keeps its selected
+      // machine and earned unlock instead of automatically entering Portfolio.
+      ++entryAttempt.current;
+      busy.current = false;
+      restoring.current = false;
+      origin.current = null;
+      suppressClickUntil.current = 0;
+      document.documentElement.classList.remove("computer-handover");
+      document.documentElement.classList.add("computer-entry");
+      restoreComputerSurfaces({
+        dialog: dialog.current,
+        cards: cards.current,
+        surface: surface.current,
+      });
+      restoreFocus.current = true;
+      announceRestoredReady.current = true;
+      setAnnouncement("");
+      setEntering(false);
+      void mount(0);
+      if (state.current.unlocked)
+        destinations.forEach((_, index) => {
+          if (index) void mount(index);
+        });
     };
     document.addEventListener("visibilitychange", hidden);
     window.addEventListener("pagehide", pagehide);
@@ -392,6 +500,7 @@ export function SecretComputerDeck({
     void mount(0);
     return () => {
       alive.current = false;
+      ++lifetime.current;
       card?.removeEventListener("computer-screen-on", screenOn);
       document.removeEventListener("visibilitychange", hidden);
       window.removeEventListener("pagehide", pagehide);
@@ -399,228 +508,276 @@ export function SecretComputerDeck({
       disposeScenes();
       stop();
     };
-  }, [mount, disposeScenes, onComplete, play, stop]);
+  }, [mount, disposeScenes, play, stop, surface]);
   useEffect(() => {
     if (code.unlocked) {
-      destinations.forEach((_, index) => {
-        if (index !== 0) void mount(index);
-      });
+      for (let index = 1; index < destinations.length; index++) void mount(index);
     }
   }, [code.unlocked, mount]);
 
+  useEffect(() => {
+    return listenForDeckEscape({
+      window,
+      getPhase: () => {
+        if (!alive.current || !dialog.current) return null;
+        return busy.current ? "entering" : expanded ? "expanded" : "locked";
+      },
+      onCancel: () => {
+        void cancelEntry();
+      },
+      onExit: exitFactory,
+      onSkip: () => {
+        void enter(0, true);
+      },
+    });
+  }, [cancelEntry, enter, exitFactory, expanded]);
+
+  const restoredFocus = useRef(false);
+  useEffect(() => {
+    if (!restoredFactory || restoredFocus.current || !scenes.current[active]) return;
+    restoredFocus.current = true;
+    cards.current[active]
+      ?.querySelector<HTMLButtonElement>("[data-computer-enter]")
+      ?.focus({ preventScroll: true });
+  }, [restoredFactory, readyCount, active]);
+
   return (
-    <section
-      ref={dialog}
-      className="portfolio-computer secret-computer-deck"
-      data-label-style={labelStyle}
-      data-entry-motion={entryMotion}
-      data-external-entry={entering && active !== 0}
-      data-unlocked={code.unlocked}
-      data-entering={entering}
-      role="dialog"
-      tabIndex={-1}
-      aria-modal="true"
-      aria-label={code.unlocked ? "Choose a computer" : "Enter Matt’s portfolio"}
-      onFocusCapture={(event) => {
-        if (!(event.target instanceof Element) || !event.target.matches(".computer-screen-hit"))
-          return;
-        if (!cards.current[activeRef.current]?.contains(event.target))
-          dialog.current?.focus({ preventScroll: true });
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          if (busy.current && activeRef.current !== 0) void cancelEntry();
-          else void enter(0, true);
-          return;
-        }
-        if (event.key === "Tab") {
-          if (busy.current && activeRef.current !== 0) {
-            event.preventDefault();
+    <>
+      <section
+        ref={dialog}
+        className="portfolio-computer secret-computer-deck"
+        data-label-style={labelStyle}
+        data-active-kind={destinations[active]?.kind}
+        data-entry-motion={entryMotion}
+        data-external-entry={entering && active !== 0}
+        data-unlocked={expanded}
+        data-entering={entering}
+        role="dialog"
+        tabIndex={-1}
+        aria-modal="true"
+        aria-label={expanded ? "Choose a computer" : "Enter Matt’s portfolio"}
+        onFocusCapture={(event) => {
+          if (!(event.target instanceof Element) || !event.target.matches(".computer-screen-hit"))
+            return;
+          if (!cards.current[activeRef.current]?.contains(event.target))
+            dialog.current?.focus({ preventScroll: true });
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Tab") {
+            if (busy.current) {
+              event.preventDefault();
+              return;
+            }
+            const buttons = [
+              ...(dialog.current?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ??
+                []),
+            ].filter(
+              (button) =>
+                button.tabIndex >= 0 &&
+                !button.closest("[inert]") &&
+                button.getClientRects().length > 0,
+            );
+            const first = buttons[0],
+              last = buttons[buttons.length - 1];
+            if (
+              event.shiftKey &&
+              (document.activeElement === first || document.activeElement === dialog.current)
+            ) {
+              event.preventDefault();
+              last?.focus();
+            }
+            if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first?.focus();
+            }
             return;
           }
-          const buttons = [
-            ...(dialog.current?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ??
-              []),
-          ].filter(
-            (button) =>
-              button.tabIndex >= 0 &&
-              !button.closest("[inert]") &&
-              button.getClientRects().length > 0,
-          );
-          const first = buttons[0],
-            last = buttons[buttons.length - 1];
+          if (expanded) {
+            if (
+              !event.altKey &&
+              !event.ctrlKey &&
+              !event.metaKey &&
+              (event.key === "ArrowLeft" || event.key === "ArrowRight")
+            ) {
+              event.preventDefault();
+              select(activeRef.current + (event.key === "ArrowRight" ? 1 : -1), true);
+            }
+            return;
+          }
+          const symbol = keyboardSymbol(event);
+          if (symbol) {
+            event.preventDefault();
+            input(symbol, "keyboard");
+          }
+        }}
+        onPointerDown={(event) => {
+          if (!(event.target instanceof Element) || !event.target.closest(".secret-computer-card"))
+            return;
+          const focusedCard = cards.current.find((card) => card?.contains(document.activeElement));
+          releaseComputerFocus(focusedCard, document.activeElement, dialog.current);
+          // Suppress only the click from the drag that just ended. A new
+          // physical press is a fresh intention, including an immediate tap.
+          if (activeRef.current !== 0) suppressClickUntil.current = 0;
+          origin.current = {
+            x: event.clientX,
+            y: event.clientY,
+            id: event.pointerId,
+            type: event.pointerType,
+            moved: false,
+          };
+        }}
+        onPointerMove={(event) => {
+          const start = origin.current;
           if (
-            event.shiftKey &&
-            (document.activeElement === first || document.activeElement === dialog.current)
+            start &&
+            event.pointerId === start.id &&
+            Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12
           ) {
-            event.preventDefault();
-            last?.focus();
+            start.moved = true;
+            suppressClickUntil.current = performance.now() + 800;
           }
-          if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first?.focus();
-          }
-          return;
-        }
-        if (code.unlocked) {
-          if (
-            !event.altKey &&
-            !event.ctrlKey &&
-            !event.metaKey &&
-            (event.key === "ArrowLeft" || event.key === "ArrowRight")
-          ) {
-            event.preventDefault();
-            select(activeRef.current + (event.key === "ArrowRight" ? 1 : -1), true);
-          }
-          return;
-        }
-        const symbol = keyboardSymbol(event);
-        if (symbol) {
+        }}
+        onPointerUp={(event) => {
+          const start = origin.current;
+          if (!start || start.id !== event.pointerId) return;
+          origin.current = null;
+          if (start.moved) suppressClickUntil.current = performance.now() + 800;
+          if (start.type !== "touch" && start.type !== "pen") return;
+          const symbol = swipeSymbol(event.clientX - start.x, event.clientY - start.y);
+          if (!symbol) return;
           event.preventDefault();
-          input(symbol, "keyboard");
-        }
-      }}
-      onPointerDown={(event) => {
-        if (!(event.target instanceof Element) || !event.target.closest(".secret-computer-card"))
-          return;
-        const focusedCard = cards.current.find((card) => card?.contains(document.activeElement));
-        releaseComputerFocus(focusedCard, document.activeElement, dialog.current);
-        // Suppress only the click from the drag that just ended. A new
-        // physical press is a fresh intention, including an immediate tap.
-        if (activeRef.current !== 0) suppressClickUntil.current = 0;
-        origin.current = {
-          x: event.clientX,
-          y: event.clientY,
-          id: event.pointerId,
-          type: event.pointerType,
-          moved: false,
-        };
-      }}
-      onPointerMove={(event) => {
-        const start = origin.current;
-        if (
-          start &&
-          event.pointerId === start.id &&
-          Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12
-        ) {
-          start.moved = true;
           suppressClickUntil.current = performance.now() + 800;
-        }
-      }}
-      onPointerUp={(event) => {
-        const start = origin.current;
-        if (!start || start.id !== event.pointerId) return;
-        origin.current = null;
-        if (start.moved) suppressClickUntil.current = performance.now() + 800;
-        if (start.type !== "touch" && start.type !== "pen") return;
-        const symbol = swipeSymbol(event.clientX - start.x, event.clientY - start.y);
-        if (!symbol) return;
-        event.preventDefault();
-        suppressClickUntil.current = performance.now() + 800;
-        if (state.current.unlocked) {
-          if (symbol === "←" || symbol === "→")
-            select(activeRef.current + (symbol === "←" ? 1 : -1));
-        } else input(symbol, "touch");
-      }}
-      onPointerCancel={() => {
-        origin.current = null;
-        suppressClickUntil.current = performance.now() + 800;
-      }}
-      onClickCapture={(event) => {
-        if (
-          performance.now() < suppressClickUntil.current &&
-          event.target instanceof Element &&
-          event.target.closest(".secret-computer-card")
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }}
-    >
-      <div
-        className="secret-computer-track"
-        style={{ "--active-computer": active } as CSSProperties}
+          if (state.current.unlocked) {
+            if (symbol === "←" || symbol === "→")
+              select(activeRef.current + (symbol === "←" ? 1 : -1));
+          } else input(symbol, "touch");
+        }}
+        onPointerCancel={() => {
+          origin.current = null;
+          suppressClickUntil.current = performance.now() + 800;
+        }}
+        onClickCapture={(event) => {
+          if (
+            performance.now() < suppressClickUntil.current &&
+            event.target instanceof Element &&
+            event.target.closest(".secret-computer-card")
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
       >
-        {destinations.map((destination, index) => (
-          <article
-            key={destination.kind}
-            ref={(element) => {
-              cards.current[index] = element;
-            }}
-            className={`secret-computer-card${index === active ? " active" : ""}`}
-            data-computer-entrance
-            data-kind={destination.kind}
-            data-focus-style={COMPUTER_FOCUS[destination.kind]}
-            data-case-baked={destination.kind === "references" ? "true" : undefined}
-            inert={!code.unlocked && index !== 0}
-            onClick={(event) => {
-              if (!(event.target instanceof Element) || event.target.closest("button")) return;
-              if (code.unlocked && index !== activeRef.current) select(index);
-            }}
-          >
-            <div className="secret-computer-rig">
-              <canvas className="computer-poster" width="1024" height="1024" aria-hidden="true" />
-              <div className="computer-stage" data-computer-stage aria-hidden="true" />
-              <button
-                className="computer-screen-hit"
-                data-computer-enter
-                tabIndex={index === active ? 0 : -1}
-                disabled={entering || !scenes.current[index]}
-                aria-label={`${code.unlocked && index !== active ? "Select" : "Enter"} ${destination.label}`}
-                aria-current={index === active ? "true" : undefined}
-                onClick={() => {
-                  if (code.unlocked && index !== activeRef.current) select(index);
-                  else void enter(index);
-                }}
-              />
-            </div>
-            {destination.kind === "anduril" ? (
-              <SonarCaption label={destination.label} domain={destination.domain} />
-            ) : (
-              <div className="secret-computer-label">
-                <h2 aria-label={destination.label}>
-                  {labelStyle === "wild-plus" ? (
-                    <span className="computer-label-word" aria-hidden="true">
-                      {[...destination.label].map((letter, i) => (
-                        <span className="computer-label-glyph" data-glyph={letter} key={i}>
-                          {letter}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    destination.label
-                  )}
-                </h2>
-                <p>{destination.domain}</p>
-                <small>{destination.detail}</small>
+        {
+          <div className="factory-spotlights" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+        }
+        <div
+          className="secret-computer-track"
+          style={{ "--active-computer": active } as CSSProperties}
+        >
+          {destinations.map((destination, index) => (
+            <article
+              key={destination.kind}
+              ref={(element) => {
+                cards.current[index] = element;
+              }}
+              className={`secret-computer-card${index === active ? " active" : ""}`}
+              data-computer-entrance
+              data-kind={destination.kind}
+              data-case-baked={destination.kind === "references" ? "true" : undefined}
+              data-focus-style="factory"
+              inert={!expanded && index !== 0}
+              onClick={(event) => {
+                if (!(event.target instanceof Element) || event.target.closest("button")) return;
+                if (code.unlocked && index !== activeRef.current) select(index);
+              }}
+            >
+              <div className="secret-computer-rig">
+                <canvas className="computer-poster" width="1024" height="1024" aria-hidden="true" />
+                <div className="computer-stage" data-computer-stage aria-hidden="true" />
+                <button
+                  className="computer-screen-hit"
+                  data-computer-enter
+                  tabIndex={index === active ? 0 : -1}
+                  disabled={entering || !scenes.current[index]}
+                  aria-label={`${code.unlocked && index !== active ? "Select" : "Enter"} ${destination.label}`}
+                  aria-current={index === active ? "true" : undefined}
+                  onClick={() => {
+                    if (code.unlocked && index !== activeRef.current) select(index);
+                    else void enter(index);
+                  }}
+                />
               </div>
-            )}
-          </article>
-        ))}
-      </div>
-      {code.unlocked && (
-        <nav className="secret-computer-browse" aria-label="Secret computers">
-          <button disabled={entering || active === 0} onClick={() => select(activeRef.current - 1)}>
-            Previous
-          </button>
-          <span aria-live="polite">
-            0{active + 1} / 0{destinations.length}
-          </span>
+              {destination.kind === "anduril" ? (
+                <SonarCaption label={destination.label} domain={destination.domain} />
+              ) : (
+                <div className="secret-computer-label">
+                  <h2 aria-label={destination.label}>
+                    {labelStyle === "wild-plus" ? (
+                      <span className="computer-label-word" aria-hidden="true">
+                        {[...destination.label].map((letter, i) => (
+                          <span className="computer-label-glyph" data-glyph={letter} key={i}>
+                            {letter}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      destination.label
+                    )}
+                  </h2>
+                  <p>{destination.domain}</p>
+                  <small>{destination.detail}</small>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+        {expanded && (
+          <nav className="secret-computer-browse" aria-label="Secret computers">
+            <button
+              disabled={entering || active === 0}
+              onClick={() => select(activeRef.current - 1)}
+            >
+              Previous
+            </button>
+            <span aria-live="polite">
+              0{active + 1} / 0{destinations.length}
+            </span>
+            <button
+              disabled={entering || active === destinations.length - 1}
+              onClick={() => select(activeRef.current + 1)}
+            >
+              Next
+            </button>
+          </nav>
+        )}
+        {code.unlocked && (
           <button
-            disabled={entering || active === destinations.length - 1}
-            onClick={() => select(activeRef.current + 1)}
+            className="factory-exit"
+            disabled={entering}
+            onClick={() => {
+              if (expanded) exitFactory();
+              else {
+                restoreFocus.current = true;
+                setCollapsed(false);
+                setAnnouncement("Factory reopened. Four computers available.");
+              }
+            }}
           >
-            Next
+            {expanded ? "Exit factory" : "Show computers"}
           </button>
-        </nav>
-      )}
-      <button className="computer-skip" disabled={entering} onClick={() => void enter(0, true)}>
-        Skip intro
-      </button>
-      <p className="sr-only" role="status" aria-live="polite">
-        {announcement}
-      </p>
-    </section>
+        )}
+        <button className="computer-skip" disabled={entering} onClick={() => void enter(0, true)}>
+          Skip intro
+        </button>
+        <p className="sr-only" role="status" aria-live="polite">
+          {announcement}
+        </p>
+      </section>
+    </>
   );
 }

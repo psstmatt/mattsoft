@@ -1,11 +1,3 @@
-/** The reviewed keyboard-focus treatment for each destination. */
-export const COMPUTER_FOCUS = Object.freeze({
-  portfolio: "stage",
-  scout: "halo",
-  references: "spotlight",
-  anduril: "tidal",
-} as const);
-
 type FocusOwner = { focus: (options?: FocusOptions) => void };
 type FocusCard = { contains: (node: Node | null) => boolean };
 

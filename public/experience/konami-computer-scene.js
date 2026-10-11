@@ -8,6 +8,7 @@ import {
   finishExternalViewport,
 } from "./konami-external-entry.js?v=33";
 import { applyComputerLayout, allowsComputerCameraMotion } from "./konami-layout.js";
+import { mountComputerPointer } from "./konami-pointer.js?v=54";
 import {
   previewScroll,
   createPreviewTimeline,
@@ -247,7 +248,7 @@ async function lo(p, s, options = {}) {
   // Inflatable Scout has one measured pose and its own aperture. It must never
   // request the retired acrylic angle bank, including direct runtime callers.
   if (kind === "scout") {
-    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=33");
+    const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=54");
     return mountCanvasComputer(p, s, options);
   }
   const external = kind !== "portfolio";
@@ -276,7 +277,8 @@ async function lo(p, s, options = {}) {
   let R = 0,
     me = 0,
     F = !1,
-    D = !1;
+    D = !1,
+    pointer;
   const earlyCleanup = () => {
     F = true;
     clearTimeout(prefetchTimer);
@@ -607,6 +609,7 @@ async function lo(p, s, options = {}) {
       !F &&
       active &&
       visible &&
+      pointer?.inView !== false &&
       !document.hidden &&
       x.clientWidth > 0 &&
       x.clientHeight > 0 &&
@@ -616,6 +619,9 @@ async function lo(p, s, options = {}) {
     (e.activeTexture(e.TEXTURE0 + t), e.bindTexture(e.TEXTURE_2D, o), e.uniform1i(r, t));
   }
   function je(t, force = false) {
+    // Direct lifecycle paints must cancel the queued frame before clearing its
+    // handle, otherwise deactivation can strand a second render callback.
+    if (R) cancelAnimationFrame(R);
     R = 0;
     if (F || (!active && !force && !D) || !visible || !x.clientWidth || !x.clientHeight) return;
     if (
@@ -629,10 +635,6 @@ async function lo(p, s, options = {}) {
     me = t;
     const n = g.matches;
     previewTimeline.setRunning(active && visible && !document.hidden && !D && !n && !cueActive, t);
-    if (!D && allowsComputerCameraMotion(T, n) && !q && Le && t - Y > 2500) {
-      const f = t / 1e3;
-      ((ue = $ + Math.sin(f * 0.42) * $ * 0.55), (ie = V + Math.sin(f * 0.29) * V * 0.6));
-    }
     if (!D && n) ((se = ue), (ae = ie), (de = pe = 0));
     else if (!D) {
       const A = 2 * Math.sqrt(60);
@@ -641,7 +643,7 @@ async function lo(p, s, options = {}) {
         (pe += (60 * (ie - ae) - A * pe) * r),
         (ae += pe * r));
     }
-    Z += (xe - Z) * (1 - Math.exp(-r * 24));
+    Z = n ? xe : Z + (xe - Z) * (1 - Math.exp(-r * 24));
     const a = n ? 1 : Math.min(Math.max((t - qe) / 700, 0), 1);
     if (a > 0 && !powerNotified) {
       powerNotified = true;
@@ -754,7 +756,7 @@ async function lo(p, s, options = {}) {
       const O =
         Math.abs(ue - se) + Math.abs(ie - ae) + Math.abs(de) + Math.abs(pe) + Math.abs(xe - Z) >
         0.001;
-      (!n || O) && H();
+      (O || (!n && (a < 1 || (!cueActive && previewHeight < 1)))) && H();
     }
   }
   function bt() {
@@ -769,6 +771,7 @@ async function lo(p, s, options = {}) {
       W.clear();
       if (prefetchQueue) prefetchQueue.length = 0;
       themeObserver.disconnect();
+      pointer?.dispose();
       (cancelAnimationFrame(R),
         vt.disconnect(),
         ze.forEach((t) => e.deleteTexture(t)),
@@ -792,6 +795,7 @@ async function lo(p, s, options = {}) {
       prefetching ||
       !active ||
       !visible ||
+      pointer?.inView === false ||
       F ||
       D ||
       s.aborted
@@ -812,6 +816,7 @@ async function lo(p, s, options = {}) {
     }
     const o = async () => {
       while (t.length && active && visible && !F && !D && !s.aborted) {
+        if (pointer?.inView === false) break;
         const id = t.shift();
         await nt(id).catch(fail);
       }
@@ -821,72 +826,59 @@ async function lo(p, s, options = {}) {
     });
   }
   function Fe() {
-    if (!active) return;
-    ((ue = $), (ie = V), H());
+    pointer?.reset(true, false);
+    ue = se = $;
+    ie = ae = V;
+    de = pe = xe = Z = 0;
+    H();
   }
   function Ke(t, o) {
     if (!active || !visible || F || !x.clientWidth || !x.clientHeight) return;
     Y = performance.now();
-    ue = $ + Math.tanh(t) * $;
-    ie = V - Math.tanh(o) * V;
+    ue = $ + t * $ * 0.7;
+    ie = V - o * V * 0.75;
     H();
   }
-  let q = null;
-  (document.addEventListener(
-    "pointerdown",
-    (t) => {
-      !allowsComputerCameraMotion(T, g.matches) ||
-        !active ||
-        !visible ||
-        F ||
-        D ||
-        g.matches ||
-        t.pointerType === "mouse" ||
-        ((q = { x: t.clientX, y: t.clientY }), (Y = performance.now()));
+  pointer = mountComputerPointer({
+    element: p,
+    canvas: u,
+    stage: x,
+    signal: s,
+    getPose: () => l,
+    isAvailable: () => active && visible && !F && !D,
+    onChange(immediate) {
+      if (F || D) return;
+      const target = pointer.target;
+      Ke(target.x, target.y);
+      if (immediate) {
+        se = ue;
+        ae = ie;
+        de = pe = 0;
+      }
+      xe = pointer.hovered || h.matches(":focus-visible") ? 1 : 0;
+      if (!pointer.inView || document.hidden) {
+        previewTimeline.setRunning(false, performance.now());
+        cancelAnimationFrame(R);
+        R = 0;
+      } else {
+        H();
+        if (pointer.hovered) be();
+      }
     },
-    { signal: s },
-  ),
-    document.addEventListener(
-      "pointermove",
-      (t) => {
-        if (
-          allowsComputerCameraMotion(T, g.matches) &&
-          active &&
-          visible &&
-          !F &&
-          x.clientWidth > 0 &&
-          x.clientHeight > 0 &&
-          !(D || g.matches)
-        ) {
-          if (q) {
-            const o = Math.min(U, k) * 0.3;
-            if (Math.hypot(t.clientX - q.x, t.clientY - q.y) > 10) be();
-            Ke((t.clientX - q.x) / o, (t.clientY - q.y) / o);
-          } else if (t.pointerType === "mouse") {
-            const o = x.getBoundingClientRect(),
-              r = ((t.clientX - o.left) * U) / o.width - l.x - l.s / 2,
-              n = ((t.clientY - o.top) * k) / o.height - l.y - l.s / 2;
-            (Ke(r / (U * 0.4), n / (k * 0.4)), be());
-          }
-        }
-      },
-      { signal: s },
-    ));
-  for (const t of ["pointerup", "pointercancel"])
-    document.addEventListener(
-      t,
-      () => {
-        q && ((q = null), (Y = performance.now()), D || Fe());
-      },
-      { signal: s },
-    );
-  document.documentElement.addEventListener(
-    "pointerleave",
-    () => {
-      !active || D || ((Y = performance.now()), Fe());
-    },
-    { signal: s },
-  );
+  });
+  // Keep screen keyboard focus and the original click cue available even when
+  // pointer motion is disabled. These handlers must exist before mount returns.
+  const wt = () => {
+    if (!active || !visible || F || D) return;
+    xe = 1;
+    Y = performance.now();
+    H();
+  };
+  const Et = () => {
+    xe = pointer.hovered ? 1 : 0;
+    Y = performance.now();
+    H();
+  };
   // Mobile swipes drive the chosen spring feedback only. Device motion and
   // camera drag must not compete with that gesture or resize the apparent case.
   const captureKey = () =>
@@ -973,6 +965,8 @@ async function lo(p, s, options = {}) {
         // An immediate pause after mount still needs one retained visible frame.
         if (!value && !hasPainted && visible) je(performance.now(), true);
         active = !!value;
+        Fe();
+        if (!active && visible) je(performance.now(), true);
         previewTimeline.setRunning(false, performance.now());
         cancelAnimationFrame(R);
         R = 0;
@@ -986,7 +980,7 @@ async function lo(p, s, options = {}) {
           if (Le) be();
           else if (T) prefetchTimer = setTimeout(be, 2000);
         } else {
-          q = null;
+          Fe();
           clearTimeout(prefetchTimer);
           clearTimeout(snapshotTimer);
         }
@@ -994,6 +988,7 @@ async function lo(p, s, options = {}) {
       setVisible(value) {
         if (F || D) return;
         visible = !!value;
+        Fe();
         previewTimeline.setRunning(false, performance.now());
         u.style.visibility = visible ? "visible" : "hidden";
         if (visible) {
@@ -1006,7 +1001,7 @@ async function lo(p, s, options = {}) {
         } else {
           cancelAnimationFrame(R);
           R = 0;
-          q = null;
+          Fe();
         }
       },
       setInput({
@@ -1116,6 +1111,7 @@ async function lo(p, s, options = {}) {
         previewTimeline.setRunning(false, now);
         qe = Math.min(qe, now - 700);
         D = true;
+        pointer.reset(true, false);
         clearTimeout(snapshotTimer);
         h.style.pointerEvents = "none";
         cancelAnimationFrame(R);
@@ -1196,7 +1192,7 @@ export async function mountComputer(element, parentSignal, options = {}) {
     controller.abort();
     parentSignal?.removeEventListener("abort", abort);
     if (error.message === "WebGL2 unavailable" && !parentSignal?.aborted) {
-      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=33");
+      const { mountCanvasComputer } = await import("./konami-canvas-scene.js?v=54");
       return mountCanvasComputer(element, parentSignal, options);
     }
     throw error;
