@@ -19,6 +19,12 @@ import {
   type FactoryView,
 } from "../lib/factory-session";
 import { listenForFactoryReturn } from "../lib/factory-escape";
+import {
+  createFactoryDeparture,
+  restoreFactoryReturn,
+  type DestinationId,
+} from "../lib/factory-travel/protocol";
+import { FACTORY_TRAVEL_CONFIG } from "../lib/factory-travel/config";
 import { RAINBOW_HOLD_MS, RAINBOW_FADE_MS, createRevealSchedule } from "../lib/experience-timing";
 
 type RainbowModule = {
@@ -142,13 +148,22 @@ export function PortfolioExperience({ children }: { children: ReactNode }) {
     [applyFactoryView, router],
   );
 
-  const updateFactory = useCallback((snapshot: FactorySnapshot) => {
-    if (!sessionRef.current || !isFactorySnapshot(snapshot)) return;
-    const session = { ...sessionRef.current, snapshot: { ...snapshot } };
-    sessionRef.current = session;
-    setFactorySession(session);
-    saveFactorySession(factoryBrowserStorage(), session);
-  }, []);
+  const updateFactory = useCallback(
+    (snapshot: FactorySnapshot) => {
+      if (!sessionRef.current || !isFactorySnapshot(snapshot)) return;
+      const session = { ...sessionRef.current, snapshot: { ...snapshot } };
+      sessionRef.current = session;
+      setFactorySession(session);
+      saveFactorySession(factoryBrowserStorage(), session);
+      // Keep each deck entry current so reload/Back can restore its own computer,
+      // even after a newer visit changed this tab's shared session snapshot.
+      if (viewRef.current === "deck") {
+        const location = router.history.location;
+        router.history.replace(location.href, factoryHistoryState(location.state, session, "deck"));
+      }
+    },
+    [router],
+  );
 
   const returnToComputers = useCallback(() => {
     const session = sessionRef.current;
@@ -159,15 +174,28 @@ export function PortfolioExperience({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event("resize"));
   }, [openFactoryView, updateFactory]);
 
-  const recordExternalEntry = useCallback(() => {
-    const session = sessionRef.current;
-    if (!session) return;
-    saveFactorySession(factoryBrowserStorage(), session);
-    // Preserve the selected machine on the departing entry for normal Back
-    // navigation. Destination-side Escape requires a separate integration.
-    const location = router.history.location;
-    router.history.replace(location.href, factoryHistoryState(location.state, session, "deck"));
-  }, [router]);
+  const recordExternalEntry = useCallback(
+    (destination: DestinationId) => {
+      const session = sessionRef.current;
+      if (!session) return null;
+      saveFactorySession(factoryBrowserStorage(), session);
+      // Keep native Back and cooperative destination Escape on the same earned visit.
+      const location = router.history.location;
+      router.history.replace(location.href, factoryHistoryState(location.state, session, "deck"));
+      return createFactoryDeparture({
+        session,
+        destinationId: destination,
+        factoryId:
+          window.location.origin === FACTORY_TRAVEL_CONFIG.factories["review"]
+            ? "review"
+            : "production",
+        origin: window.location.origin,
+        storage: factoryBrowserStorage(),
+        config: FACTORY_TRAVEL_CONFIG,
+      });
+    },
+    [router],
+  );
 
   const finish = useCallback(() => {
     releaseSurface();
@@ -187,11 +215,30 @@ export function PortfolioExperience({ children }: { children: ReactNode }) {
   }, [releaseSurface, openFactoryView]);
 
   useEffect(() => {
-    const location = router.history.location;
     const stored = readFactorySession(factoryBrowserStorage());
+    const previousHref = window.location.href;
+    const returning = restoreFactoryReturn({
+      session: stored,
+      href: previousHref,
+      history: window.history,
+      storage: factoryBrowserStorage(),
+      config: FACTORY_TRAVEL_CONFIG,
+    });
+    if (window.location.href !== previousHref) {
+      router.history.replace(
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        window.history.state,
+      );
+    }
+    const location = router.history.location;
     const savedView = factoryViewFromHistory(location.state, stored);
     const entryRoot = factoryEntryRoot(location.pathname, location.search);
-    if (stored && savedView)
+    if (stored && returning) {
+      const returned = { ...stored, snapshot: { ...returning, expanded: returning.unlocked } };
+      saveFactorySession(factoryBrowserStorage(), returned);
+      applyFactoryView(returned, "deck");
+      router.history.replace(location.href, factoryHistoryState(location.state, returned, "deck"));
+    } else if (stored && savedView)
       applyFactoryView(factorySessionFromHistory(location.state, stored), savedView);
     else if (entryRoot) {
       const session: FactorySession = {
@@ -246,7 +293,11 @@ export function PortfolioExperience({ children }: { children: ReactNode }) {
         const location = router.history.location;
         return `${session.id}:${view}:${location.state.__TSR_key ?? location.href}`;
       },
-      onReturn: returnToComputers,
+      onReturn: () => {
+        returnToComputers();
+        // This same-document return has no pagehide/pageshow to release the latch.
+        return false;
+      },
     });
   }, [router, returnToComputers]);
 

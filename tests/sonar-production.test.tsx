@@ -10,7 +10,9 @@ const props = {
   surface: { current: null },
   onComplete() {},
   onFactoryChange() {},
-  onExternalEntry() {},
+  onExternalEntry() {
+    return null;
+  },
 };
 const renderDeck = () => renderToStaticMarkup(createElement(SecretComputerDeck, props));
 
@@ -52,7 +54,8 @@ describe("production Sonar deck", () => {
       );
       expect(html).toContain(`data-unlocked="${expanded}"`);
       expect(html).toContain(`data-active-kind="${expanded ? "anduril" : "portfolio"}"`);
-      expect(html).toContain(expanded ? "Exit factory" : "Show computers");
+      expect(html.includes("Exit factory")).toBe(expanded);
+      expect(html).not.toContain("Show computers");
       expect(html.includes('aria-label="Secret computers"')).toBe(expanded);
       const cards = [...html.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(
         ([card]) => card,

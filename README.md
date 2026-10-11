@@ -38,12 +38,12 @@ These are the original approved case assets, shown without the runtime page prev
 
 - Portfolio keeps its original green material and screen-entry transition. The rainbow remains visible for four seconds after entry, then fades.
 - Scout and References use their approved “Absurd” entry animations. Sonar uses its own curved screen mesh for both the idle preview and entry, keeping the page fitted to the CRT aperture.
-- External computers show captured previews of their destinations. After entry, the browser opens the actual site; its loading behavior belongs to that destination.
+- External computers show captured previews of their destinations. A short 280 ms departure leads directly to the actual site. The transition does not enlarge and hold a screenshot while pretending the page is live; the destination paints normally as it loads. Green Portfolio retains its local live-page transition.
 - Captions use the machine names without number eyebrows. The navigation still shows the position count.
 - The shared spotlights follow the selected machine. Pointer movement inside the case changes its angle; moving outside lets it return to center. Keyboard focus belongs to the active machine and clears during pointer selection and entry. Reduced motion uses static focus cues and immediate entry. Forced-colors mode keeps a visible caption focus cue.
-- Escape during any computer's entry cancels the transition and restores that computer. Escape from the expanded factory, or **Exit factory**, collapses the room to the green computer; **Show computers** reopens the earned unlock. Escape from the single green entrance skips to Portfolio.
+- Escape during any computer's entry cancels the transition and restores that computer. Escape from the expanded factory, or **Exit factory**, collapses the room to the green computer; the secret code reopens the room. There is no public **Show computers** button. Escape from the single green entrance skips to Portfolio.
 - After entering Portfolio, Escape returns to the factory, including after navigating to About, Catalog, or a case study. Local controls, visible overlays, and fullscreen content get first use of Escape. Direct visits to content pages keep normal navigation.
-- The earned unlock and selection survive within the tab for up to six hours. A URL never grants an unlock. Browser Back from an external site restores the factory. **Escape from the live Scout, References, and Anduril sites is pending destination-side integration.**
+- The earned unlock and selection survive within the tab for up to six hours. A URL never grants an unlock. Browser Back from an external site restores the factory. Factory-launched visits to live Scout, References, and Anduril have a cooperative Escape return. It restores the originating machine and earned unlock using a 30-minute, tab-session-bound visit. Direct visits stay unarmed; inputs, dialogs, inspectors, fullscreen and pointer lock get first use of Escape. Browser Back remains the mobile alternative. If storage or referrer information is blocked, or sign-in redirects discard the visit, use browser Back.
 
 Sound is on by default, using the original retro cues. A silent AudioContext is prepared before screen-on; the boot chime plays only if the browser allows it then. A blocked boot chime is never replayed late. Konami input and activation gestures resume one shared audio context, drop stale feedback, and recover after interruptions. Browser autoplay rules and device volume still apply.
 
@@ -69,9 +69,9 @@ The new Scout and Sonar views use calibrated **2.5D relief projected from the ap
 
 ### Prototype boundaries
 
-The prototype's external destinations are local captures with an **Open live** link. Scout's preview contains only its public header, with no account or project data. Those local pages made Escape return testable without changing the destination sites. Production opens the actual external sites and includes none of those destination pages.
+Earlier prototype versions used local destination captures to test return behavior. The current review and production applications navigate to the real destination sites. Idle CRT previews remain captures; Scout's contains only its public header and no private account or project data.
 
-Review controls, type selectors, replay controls, labs, and query unlocks are excluded from production. Live external-site Escape return remains pending. The five Easter eggs below are planned separately.
+Review controls, type selectors, replay controls, labs, and query unlocks are excluded from production. The five Easter eggs below are planned separately. Their implementation is not part of this navigation release.
 
 The reviewed v60 prototype had 297 passing automated tests plus cloud-browser Canvas checks of pointer-driven views and Escape cancellation. The production port has its own automated checks. Physical-device Safari and WebGL-specific behavior remain unverified.
 

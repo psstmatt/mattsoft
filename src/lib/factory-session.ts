@@ -118,7 +118,7 @@ export function factoryViewFromHistory(
 /** A page returns to its own origin, even after newer visits changed the shared selection. */
 export function factorySessionFromHistory(state: unknown, session: FactorySession): FactorySession {
   const view = factoryViewFromHistory(state, session);
-  if (!view || view === "deck") return session;
+  if (!view) return session;
   const marker = (state as Record<string, unknown>)[FACTORY_HISTORY_KEY] as FactoryMarker;
   const origin = isFactorySnapshot(marker.snapshot) ? marker.snapshot : session.snapshot;
   return {

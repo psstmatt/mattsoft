@@ -10,6 +10,12 @@ import { useReducedMotion } from "motion/react";
 import { useSound } from "@/lib/sound";
 import { releaseComputerFocus } from "@/lib/computer-focus";
 import { restoreComputerSurfaces } from "@/lib/computer-recovery";
+import {
+  EXTERNAL_DEPARTURE_MS,
+  externalDepartureFrames,
+  prepareDestinationConnection,
+} from "@/lib/external-departure";
+import { type DestinationId } from "@/lib/factory-travel/protocol";
 import { SonarCaption } from "./sonar-caption";
 import { type FactorySnapshot } from "@/lib/factory-session";
 import "./factory-computers.css";
@@ -108,7 +114,7 @@ export function SecretComputerDeck({
   onComplete: () => void;
   restoredFactory?: FactorySnapshot;
   onFactoryChange: (snapshot: FactorySnapshot) => void;
-  onExternalEntry: () => void;
+  onExternalEntry: (destination: DestinationId) => string | null;
 }) {
   const { play, stop, konamiFeedback, konamiUnlock } = useSound();
   const material = "inflatable";
@@ -133,8 +139,9 @@ export function SecretComputerDeck({
   const restoring = useRef(false);
   const restoreFocus = useRef(false);
   const announceRestoredReady = useRef(false);
+  const earnedUnlock = useRef(!!restoredFactory?.unlocked);
   const state = useRef(
-    restoredFactory?.unlocked
+    restoredFactory?.unlocked && restoredFactory.expanded
       ? Object.freeze({ ...createKonamiState("keyboard"), unlocked: true })
       : createKonamiState("keyboard"),
   );
@@ -153,7 +160,11 @@ export function SecretComputerDeck({
   const [collapsed, setCollapsed] = useState(restoredFactory ? !restoredFactory.expanded : false);
   const expanded = code.unlocked && !collapsed;
   useEffect(() => {
-    onFactoryChange({ unlocked: code.unlocked, active, expanded });
+    const url = destinations[active]?.url;
+    if (expanded && url) prepareDestinationConnection(url, document);
+  }, [active, expanded]);
+  useEffect(() => {
+    onFactoryChange({ unlocked: earnedUnlock.current, active, expanded });
   }, [onFactoryChange, code.unlocked, active, expanded]);
   const [entering, setEntering] = useState(false);
   const [announcement, setAnnouncement] = useState("");
@@ -333,12 +344,15 @@ export function SecretComputerDeck({
     select(0);
     restoreFocus.current = true;
     setCollapsed(true);
-    setAnnouncement("Back to the green computer. Your factory is still unlocked.");
+    state.current = createKonamiState("keyboard");
+    setCode(state.current);
+    setAnnouncement("Back to the green computer.");
   }, [select]);
 
   const input = useCallback(
     (symbol: string, mode: KonamiMode) => {
       if (busy.current || state.current.unlocked) return;
+      preview.current = false;
       const next = advanceKonami(state.current, symbol, mode);
       state.current = next;
       setCode(next);
@@ -352,6 +366,7 @@ export function SecretComputerDeck({
             ?.querySelector<HTMLElement>(".secret-computer-rig")
             ?.animate(motion.frames, { duration: motion.duration, easing: motion.easing }) ?? null;
       if (next.unlocked) {
+        earnedUnlock.current = true;
         setCollapsed(false);
         konamiUnlock();
         clearTimeout(previewTimer.current);
@@ -395,7 +410,20 @@ export function SecretComputerDeck({
       const card = cards.current[index];
       if (card) card.dataset["entering"] = "true";
       try {
-        if (!skip && (!reduced || index !== 0)) {
+        if (!skip && index !== 0) {
+          const rig = card?.querySelector<HTMLElement>(".secret-computer-rig");
+          if (rig && !reduced) {
+            animation.current = rig.animate(
+              externalDepartureFrames(destinations[index]?.kind ?? "external"),
+              {
+                duration: EXTERNAL_DEPARTURE_MS,
+                easing: "cubic-bezier(.2,.75,.25,1)",
+                fill: "forwards",
+              },
+            );
+            await animation.current.finished;
+          }
+        } else if (!skip && !reduced) {
           const scene = scenes.current[index];
           if (scene && surface.current) await scene.enter(surface.current);
           else if (index === 0 && dialog.current && surface.current) {
@@ -417,14 +445,14 @@ export function SecretComputerDeck({
       if (!alive.current || attempt !== entryAttempt.current) return;
       const destination = destinations[index];
       onFactoryChange({
-        unlocked: state.current.unlocked,
+        unlocked: earnedUnlock.current,
         active: index,
         expanded: state.current.unlocked && !collapsed,
       });
       if (index === 0 || skip) onComplete();
       else if (destination?.url) {
-        onExternalEntry();
-        window.location.assign(destination.url);
+        const target = onExternalEntry(destination.kind);
+        window.location.assign(target ?? destination.url);
       }
     },
     [
@@ -611,8 +639,15 @@ export function SecretComputerDeck({
           }
         }}
         onPointerDown={(event) => {
-          if (!(event.target instanceof Element) || !event.target.closest(".secret-computer-card"))
-            return;
+          if (!(event.target instanceof Element) || !event.isPrimary || busy.current) return;
+          const touch = event.pointerType === "touch" || event.pointerType === "pen";
+          if (touch) {
+            if (
+              event.target.closest("button:not([data-computer-enter]), a, input, textarea, select")
+            )
+              return;
+            // Preserve a tap's native click target. Capture only an established drag.
+          } else if (!event.target.closest(".secret-computer-card")) return;
           const focusedCard = cards.current.find((card) => card?.contains(document.activeElement));
           releaseComputerFocus(focusedCard, document.activeElement, dialog.current);
           // Suppress only the click from the drag that just ended. A new
@@ -634,6 +669,8 @@ export function SecretComputerDeck({
             Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12
           ) {
             start.moved = true;
+            if (start.type === "touch" || start.type === "pen")
+              event.currentTarget.setPointerCapture(event.pointerId);
             suppressClickUntil.current = performance.now() + 800;
           }
         }}
@@ -755,20 +792,9 @@ export function SecretComputerDeck({
             </button>
           </nav>
         )}
-        {code.unlocked && (
-          <button
-            className="factory-exit"
-            disabled={entering}
-            onClick={() => {
-              if (expanded) exitFactory();
-              else {
-                restoreFocus.current = true;
-                setCollapsed(false);
-                setAnnouncement("Factory reopened. Four computers available.");
-              }
-            }}
-          >
-            {expanded ? "Exit factory" : "Show computers"}
+        {expanded && (
+          <button className="factory-exit" disabled={entering} onClick={exitFactory}>
+            Exit factory
           </button>
         )}
         <button className="computer-skip" disabled={entering} onClick={() => void enter(0, true)}>
