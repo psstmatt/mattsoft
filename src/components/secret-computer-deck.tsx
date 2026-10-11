@@ -132,6 +132,7 @@ export function SecretComputerDeck({
   const entryAttempt = useRef(0);
   const restoring = useRef(false);
   const restoreFocus = useRef(false);
+  const announceRestoredReady = useRef(false);
   const state = useRef(
     restoredFactory?.unlocked
       ? Object.freeze({ ...createKonamiState("keyboard"), unlocked: true })
@@ -160,6 +161,10 @@ export function SecretComputerDeck({
   useEffect(() => {
     if (!entering && restoreFocus.current && scenes.current[activeRef.current]) {
       restoreFocus.current = false;
+      if (announceRestoredReady.current) {
+        announceRestoredReady.current = false;
+        setAnnouncement(`${destinations[activeRef.current]?.label} ready to enter.`);
+      }
       cards.current[activeRef.current]
         ?.querySelector<HTMLButtonElement>("[data-computer-enter]")
         ?.focus({ preventScroll: true });
@@ -475,6 +480,8 @@ export function SecretComputerDeck({
         surface: surface.current,
       });
       restoreFocus.current = true;
+      announceRestoredReady.current = true;
+      setAnnouncement("");
       setEntering(false);
       void mount(0);
       if (state.current.unlocked)
