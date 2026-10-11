@@ -682,6 +682,14 @@ export async function mountCanvasComputer(
         pose.y -= sonarLift * Math.min(2, size * 0.005);
       }
       layout = { x: pose.x, y: pose.y, size };
+      // Prototype-only observers receive the exact painted frame, never a requested view.
+      // This does not alter pose, angle selection, case pixels, or CRT geometry.
+      if (element.dataset.factoryEggs === "true")
+        element.dispatchEvent(
+          new CustomEvent("computer-painted-pose", {
+            detail: { ...layout, frame: bankFrame?.id || "1-9" },
+          }),
+        );
       x.drawImage(composite, layout.x, layout.y, size, size);
       if (sonar) paintSonarBody(x, pose);
       lastPaint = now;
@@ -767,6 +775,13 @@ export async function mountCanvasComputer(
         { signal: s },
       );
     }
+    element.addEventListener(
+      "computer-request-pose",
+      () => {
+        if (element.dataset.factoryEggs === "true") render();
+      },
+      { signal: s },
+    );
     document.addEventListener("visibilitychange", resume, { signal: s });
     reduced.addEventListener("change", resume, { signal: s });
     resize = new ResizeObserver(() => render());

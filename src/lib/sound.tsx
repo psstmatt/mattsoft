@@ -5,6 +5,7 @@ import { createSoundPlayer, type Tone } from "./sound-engine";
 type SoundApi = {
   play: (tone: Tone) => void;
   stop: () => void;
+  factoryEggFeedback: (egg: "sonar" | "valve", gesture: boolean) => void;
   konamiFeedback: (symbol: string, matched: boolean, durationMs?: number) => void;
   konamiUnlock: () => void;
 };
@@ -12,6 +13,7 @@ type SoundApi = {
 const SoundContext = createContext<SoundApi>({
   play() {},
   stop() {},
+  factoryEggFeedback() {},
   konamiFeedback() {},
   konamiUnlock() {},
 });
@@ -65,9 +67,13 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     [getPlayer],
   );
   const konamiUnlock = useCallback(() => getPlayer().konamiUnlock(), [getPlayer]);
+  const factoryEggFeedback = useCallback(
+    (egg: "sonar" | "valve", gesture: boolean) => getPlayer().factoryEggFeedback(egg, gesture),
+    [getPlayer],
+  );
   const value = useMemo(
-    () => ({ play, stop, konamiFeedback, konamiUnlock }),
-    [play, stop, konamiFeedback, konamiUnlock],
+    () => ({ play, stop, konamiFeedback, konamiUnlock, factoryEggFeedback }),
+    [play, stop, konamiFeedback, konamiUnlock, factoryEggFeedback],
   );
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
 }

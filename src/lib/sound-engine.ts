@@ -162,6 +162,18 @@ export function createSoundPlayer(
     withContext(gesture, gesture && tone !== "power", () => emit(tone));
   }
 
+  // Prototype cues share voices and lifecycle, but never resume or queue audio.
+  // A blocked context means this optional cue is silent, including after return.
+  function factoryEggFeedback(egg: "sonar" | "valve", gesture = false) {
+    if (!gesture || disposed || !enabled || context?.state !== "running") return;
+    stop();
+    emitRecipe(
+      egg === "sonar"
+        ? { freq: 880, to: 740, gain: 0.012, dur: 0.32, type: "sine" }
+        : { freq: 620, to: 175, gain: 0.009, dur: 0.17, type: "triangle" },
+    );
+  }
+
   function konamiFeedback(symbol: string, matched: boolean, durationMs = 360) {
     if (disposed) return;
     powerAttempted = true;
@@ -231,6 +243,7 @@ export function createSoundPlayer(
     play,
     konamiFeedback,
     konamiUnlock,
+    factoryEggFeedback,
     stop,
     isEnabled: () => enabled,
     setEnabled(next: boolean) {

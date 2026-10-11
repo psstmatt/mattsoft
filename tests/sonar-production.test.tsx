@@ -28,6 +28,9 @@ describe("production Sonar deck", () => {
     expect(html).toContain('data-unlocked="false"');
     expect(html).toContain('aria-label="Enter Anduril"');
     expect(html).not.toContain('aria-label="Secret computers"');
+    expect(html).not.toContain("Open factory for review");
+    expect(html).not.toContain("Egg workbench");
+    expect(html).not.toContain("data-egg-hotspot");
   });
 
   it("cannot unlock or show replay controls through former prototype props", () => {
