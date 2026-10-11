@@ -17,6 +17,8 @@ import {
 } from "@/lib/external-departure";
 import { type DestinationId } from "@/lib/factory-travel/protocol";
 import { SonarCaption } from "./sonar-caption";
+import { FactoryEggs } from "./factory-eggs";
+import { factoryTouchMayStart } from "@/lib/factory-eggs";
 import { type FactorySnapshot } from "@/lib/factory-session";
 import "./factory-computers.css";
 import { listenForDeckEscape } from "@/lib/factory-escape";
@@ -286,6 +288,7 @@ export function SecretComputerDeck({
   // contract instead of relying on character-only resetEntry support.
   const cancelEntry = useCallback(async () => {
     if (restoring.current || !alive.current) return;
+    dialog.current?.dispatchEvent(new Event("factory-egg-reset"));
     restoring.current = true;
     ++entryAttempt.current;
     stop();
@@ -316,6 +319,7 @@ export function SecretComputerDeck({
   const select = useCallback(
     (index: number, focus = false) => {
       if (busy.current || !state.current.unlocked || collapsed) return;
+      dialog.current?.dispatchEvent(new Event("factory-egg-reset"));
       const next = Math.max(0, Math.min(destinations.length - 1, index));
       if (!focus)
         releaseComputerFocus(
@@ -394,6 +398,7 @@ export function SecretComputerDeck({
         setAnnouncement("The computer is still loading. Skip intro is available.");
         return;
       }
+      dialog.current?.dispatchEvent(new Event("factory-egg-reset"));
       busy.current = true;
       const attempt = ++entryAttempt.current;
       // Disabling the active button otherwise lets browser focus fall to body.
@@ -642,10 +647,7 @@ export function SecretComputerDeck({
           if (!(event.target instanceof Element) || !event.isPrimary || busy.current) return;
           const touch = event.pointerType === "touch" || event.pointerType === "pen";
           if (touch) {
-            if (
-              event.target.closest("button:not([data-computer-enter]), a, input, textarea, select")
-            )
-              return;
+            if (!factoryTouchMayStart(event.target)) return;
             // Preserve a tap's native click target. Capture only an established drag.
           } else if (!event.target.closest(".secret-computer-card")) return;
           const focusedCard = cards.current.find((card) => card?.contains(document.activeElement));
@@ -800,6 +802,22 @@ export function SecretComputerDeck({
         <button className="computer-skip" disabled={entering} onClick={() => void enter(0, true)}>
           Skip intro
         </button>
+        <FactoryEggs
+          deck={dialog}
+          expanded={expanded}
+          entering={entering}
+          active={active}
+          readyCount={readyCount}
+          onSelect={select}
+          onOpen={() => {
+            earnedUnlock.current = true;
+            state.current = Object.freeze({ ...state.current, unlocked: true });
+            preview.current = true;
+            setCode(state.current);
+            setCollapsed(false);
+            updateScreens();
+          }}
+        />
         <p className="sr-only" role="status" aria-live="polite">
           {announcement}
         </p>

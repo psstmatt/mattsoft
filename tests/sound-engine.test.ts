@@ -461,3 +461,86 @@ describe("Konami feedback shares the existing audio lifetime", () => {
     expect(a.closes()).toBe(1);
   });
 });
+
+describe("prototype factory egg audio isolation", () => {
+  it("does not create a context for an optional egg cue", () => {
+    let created = 0;
+    const a = audio();
+    const player = createSoundPlayer(() => {
+      created++;
+      return a.factory();
+    });
+    player.factoryEggFeedback("sonar", true);
+    player.factoryEggFeedback("valve", true);
+    expect(created).toBe(0);
+    expect(a.oscillators).toHaveLength(0);
+    expect(a.resumes()).toBe(0);
+  });
+
+  for (const state of ["suspended", "interrupted", "closed"]) {
+    it(`silently drops ${state} egg cues without resume, recovery, or delayed playback`, async () => {
+      const a = audio(state);
+      let created = 0;
+      const player = createSoundPlayer(() => {
+        created++;
+        return a.factory();
+      });
+      player.prepare();
+      player.factoryEggFeedback("sonar", true);
+      player.factoryEggFeedback("valve", true);
+      expect(created).toBe(1);
+      expect(a.resumes()).toBe(0);
+      expect(a.oscillators).toHaveLength(0);
+      a.changeState("running");
+      await flush();
+      expect(a.oscillators).toHaveLength(0);
+    });
+  }
+
+  it("requires a gesture even with already running audio", () => {
+    const a = audio();
+    const player = createSoundPlayer(a.factory);
+    player.prepare();
+    player.factoryEggFeedback("sonar");
+    player.factoryEggFeedback("valve", false);
+    expect(a.oscillators).toHaveLength(0);
+    player.factoryEggFeedback("sonar", true);
+    player.factoryEggFeedback("valve", true);
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([880, 620]);
+    expect(a.oscillators[0].stops).toContain(undefined);
+    expect(a.resumes()).toBe(0);
+  });
+
+  it("respects mute and disposal and stops an active cue", () => {
+    const a = audio();
+    const player = createSoundPlayer(a.factory);
+    player.prepare();
+    player.factoryEggFeedback("sonar", true);
+    player.setEnabled(false);
+    expect(a.oscillators[0].stops).toContain(undefined);
+    player.factoryEggFeedback("valve", true);
+    expect(a.oscillators).toHaveLength(1);
+    player.setEnabled(true);
+    player.factoryEggFeedback("valve", true);
+    expect(a.oscillators).toHaveLength(2);
+    player.dispose();
+    expect(a.oscillators[1].stops).toContain(undefined);
+    player.factoryEggFeedback("sonar", true);
+    expect(a.oscillators).toHaveLength(2);
+    expect(a.resumes()).toBe(0);
+  });
+
+  it("never adds a queued cue to an unrelated pending gesture resume", async () => {
+    const a = audio("suspended");
+    const player = createSoundPlayer(a.factory, true, () => 0);
+    player.play("click", true);
+    expect(a.resumes()).toBe(1);
+    player.factoryEggFeedback("sonar", true);
+    player.factoryEggFeedback("valve", true);
+    expect(a.resumes()).toBe(1);
+    a.changeState("running");
+    a.resolve();
+    await flush();
+    expect(a.oscillators.map((o) => o.frequency)).toEqual([420]);
+  });
+});

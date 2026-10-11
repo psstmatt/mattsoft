@@ -71,21 +71,88 @@ The new Scout and Sonar views use calibrated **2.5D relief projected from the ap
 
 Earlier prototype versions used local destination captures to test return behavior. The current review and production applications navigate to the real destination sites. Idle CRT previews remain captures; Scout's contains only its public header and no private account or project data.
 
-Review controls, type selectors, replay controls, labs, and query unlocks are excluded from production. The five Easter eggs below are planned separately. Their implementation is not part of this navigation release.
+Review controls, type selectors, replay controls, labs, and query unlocks are excluded from production. The Easter eggs below build on the verified navigation release. Production enables only secret discovery after the factory is unlocked; query parameters cannot reveal a workbench or unlock the deck.
 
 The reviewed v60 prototype had 297 passing automated tests plus cloud-browser Canvas checks of pointer-driven views and Escape cancellation. The production port has its own automated checks. Physical-device Safari and WebGL-specific behavior remain unverified.
 
-## Easter eggs on the drawing board
+## Secret factory Easter eggs
 
-The Konami unlock is already real. These five extra ideas are **planned**, with no implementation claimed in the production or prototype versions documented here.
+The five reviewed Easter eggs are included in this release, on top of navigation commit **eb633d4eb67f76c4c35dd10db6f6f7286abbce8c** (PR 19). Fast external departures, cooperative Escape return, secret-only factory reopening, original artwork and all 57-angle registrations are preserved.
 
-| Idea                         | Intended interaction                                                  |
-| ---------------------------- | --------------------------------------------------------------------- |
-| **Sonar ping**               | Turn or click the Sonar knob for a ping, with a creature to discover. |
-| **Let the air out**          | Use Scout's orange valve for a squeak and a deflate gag.              |
-| **Secret under the sticker** | Rub the holographic sticker to uncover a secret.                      |
-| **LAN party**                | Leave the computers idle and discover them having a little LAN party. |
-| **HOTDOG technician**        | Type `HOTDOG` to summon a technician.                                 |
+### Discover and review
+
+- On [psstmatt.com](https://psstmatt.com), earn the existing Konami unlock, then use the interactions below. The controller and its artwork load only while the unlocked factory is expanded
+- `?eggs=review`, `?eggs=1`, and former deck/replay query parameters cannot unlock the production factory or reveal review controls
+- The separate [public prototype workbench](https://matt-konami-computers.psstmatt.chatgpt.site/?eggs=review) retains demonstration controls for review
+- For local development, run `bun run dev --host 127.0.0.1 --port 4176`; use `/?eggs=1` for secret triggers or `/?eggs=review` for the optional workbench
+
+| Egg               | Mouse                                                                          | Keyboard                                               | Touch                                                      | Duration                                                  |
+| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------- |
+| Sonar pulse       | Click the actual silver knob on Anduril                                        | Tab to “Ping the Sonar knob”, Enter or Space           | Tap the knob                                               | 2.9s, 2s reduced motion                                   |
+| Scout air valve   | Click the metal valve on the upper-right case                                  | Tab to the valve, Enter or Space                       | Tap the valve                                              | 2.6s, 2s reduced motion                                   |
+| Sticker secret    | Rub back-and-forth across the References GOOD PEOPLE star; clicking also works | Tab to the sticker, Enter or Space                     | Tap the sticker                                            | 2.8s                                                      |
+| Idle LAN party    | Leave the settled expanded factory untouched                                   | Same; no typing or focused editable UI                 | Same; no pointer held down                                 | After 45s inactivity, 2.4s effect, once per factory visit |
+| HOTDOG technician | Type HOTDOG while the expanded factory is settled                              | Type HOTDOG outside editable UI; no modifier shortcuts | Five quick taps on the References star sticker within 2.2s | 4s                                                        |
+
+Scout now releases visible air wisps from its valve, briefly deflates the complete case/screen assembly by 35% vertically, and reinflates over 2.6 seconds. Sonar sends three expanding waves from the knob, with a scan sweep, shallow tidal ring, and brief lighting response over 2.9 seconds. A small decoded jellyfish can appear as an optional echo. Neither uses a visible text card; reduced motion uses static marks for two seconds.
+
+The sticker reveals “Still human. Still curious.” The technician’s note reads “Inspection complete. Needs mustard.” The first four touch taps retain the normal sticker response; the fifth replaces it with the technician.
+
+### Runtime screenshots · v64 effects and v62 checks
+
+Actual screenshots from the [public egg workbench](https://matt-konami-computers.psstmatt.chatgpt.site/?eggs=review), captured October 11, 2026 (UTC) in desktop cloud Chrome. Scout and Sonar show the refined **v64** effects; the unchanged sticker, HOTDOG, and LAN captures are from **v62**. The workbench appears only in review mode; [`?eggs=1`](https://matt-konami-computers.psstmatt.chatgpt.site/?eggs=1) keeps the secret triggers without the review panel.
+
+| Scout deflation · v64 light                                                                                                                          | Sonar pulse · v64 dark                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Scout visibly deflated with escaping valve wisps while its screen remains fitted to the case](docs/computers/eggs-v64/scout-deflate-v64-light.jpg) | ![Three expanding Sonar rings with a scan sweep and shallow tidal ellipse around the navy case](docs/computers/eggs-v64/sonar-pulse-v64-dark.jpg)                                                                                             |
+| **Sticker secret · v62**                                                                                                                             | **LAN party · actual idle trigger, v62**                                                                                                                                                                                                      |
+| ![References shows Still human. Still curious. below its case after activating the star sticker](docs/computers/eggs-v62/sticker-secret-light.jpg)   | ![LAN packet line and local friends, 4 online label after 45.6 seconds of actual inactivity](docs/computers/eggs-v62/lan-actual-45-second-idle-dark.jpg)                                                                                      |
+| **HOTDOG · keyboard trigger, v62**                                                                                                                   | **Additional views**                                                                                                                                                                                                                          |
+| ![Small sausage technician visible at the lower-left after typing HOTDOG](docs/computers/eggs-v62/hotdog-keyboard-light.jpg)                         | [Scout in dark mode, v64](docs/computers/eggs-v64/scout-deflate-v64-dark.jpg) · [Sonar in light mode, v64](docs/computers/eggs-v64/sonar-pulse-v64-light.jpg) · [Earlier 200% zoom check, v62](docs/computers/eggs-v62/sonar-200-percent.jpg) |
+
+The v62 zoom capture is a 590 × 379-pixel desktop screenshot. It predates the refined Scout/Sonar effects and is not a mobile or touch-emulation result.
+
+### Artwork and physical targets
+
+These are the actual transparent assets, **not screenshots of a running interaction**. Their display in the app is intentionally small. Runtime uses lossless WebP copies with identical decoded RGBA pixels (about 1.6 MB together). Original PNGs remain in the reviewed source archive. Only the expanded, unlocked factory preloads/decodes them; HOTDOG waits for its decoded sprite; Sonar’s pulse starts independently of the optional jellyfish echo.
+
+| Mint jellyfish                                                                           | Sausage technician                                                                        |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| ![Mint jellyfish artwork used beside Sonar](public/experience/eggs/sonar-jellyfish.webp) | ![Hotdog technician with inspection probe](public/experience/eggs/hotdog-technician.webp) |
+
+| Sonar knob                                                                                     | Scout valve                                                                                              | References star sticker                                                                                                               |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| ![The silver knob is below Sonar’s screen](public/experience/models/anduril-sonar-v2/case.png) | ![Scout’s valve is on the upper-right side panel](public/experience/models/scout-inflatable-v1/case.png) | ![Rub or tap the GOOD PEOPLE star below the References screen](public/experience/models/references-chrome-baked/frames/case-1-9.webp) |
+
+`public/experience/eggs/hotspots.json` contains all 171 physical-control positions keyed by the frame actually painted. Sonar and Scout use the original relief projection, including the valve’s side-panel depth; References uses the original material homographies. The hit targets follow the same final stage pose and shrink conservatively on tiny renderings rather than cover CRT links. No camera or screen geometry is changed.
+
+### Interaction and lifecycle policy
+
+- One brief decoration at a time. Decoration layers cannot receive pointer events. Physical hotspots are separate native buttons outside the CRT, with ordinary keyboard focus; touch swipes remain available
+- Scout’s whole case/glass/CRT/hit-area rig deflates together by up to 35% vertically, then reinflates. It never separates the screen from the case
+- Escape removes decoration synchronously in capture and still reaches the existing cancel/return/navigation handlers. Selection, entry, route unmount, hidden tab, and pagehide cancel decorations and pending review intent
+- HOTDOG ignores editable controls/forms, IME, held keys, modifier shortcuts, visible nested dialogs, fullscreen, and locally consumed keyboard events. Stale partial codes expire; Escape resets both typed and tap sequences
+- Idle LAN requires true inactivity and a settled, visible, expanded deck. Typing, pointer movement, wheel/scroll, focus, held pointers, forms, nested overlays, entry, and hidden tabs prevent or reset it. Any activity cancels it immediately
+- Reduced motion uses static air marks and rings for Scout/Sonar and a still technician, never a deformation, scan, walk, or automatic LAN. A deliberate workbench LAN demonstration uses static packets
+- No new sound UI. Sonar’s restrained sine ping and the valve’s quiet short squeak reuse the shared audio engine only on direct gestures when its context is already running. They never create, resume, unlock, or queue audio. Blocked/suspended audio stays silent. Sticker, HOTDOG, idle LAN, and delayed cross-machine demos are silent
+
+### Verification boundary
+
+Automated regression and lifecycle tests cover the original factory plus secret activation policy, correct-machine gating, true-idle timing, one-at-a-time replacement, cancellation, reduced motion, hidden state, pointer holds, HOTDOG input precedence, mobile multi-tap sequence, and suspended/no-gesture audio. Final local check: **369 tests passed** across 34 files (6,615 assertions), plus typecheck, lint, formatting, and build. Lint reports eight pre-existing React Fast Refresh warnings and no errors.
+
+Desktop cloud Chrome checks on published **v64** confirmed the refined Scout deflation and Sonar pulse in both light and dark themes. Scout recovered without a stuck deformation or observed case/screen separation. Escape midway through deflation immediately restored the green computer. Rapid repeated Sonar knob clicks followed by screen entry still opened the actual Anduril site, and native Escape returned to the selected Anduril machine.
+
+Earlier desktop cloud Chrome checks on **v62** confirmed:
+
+- All five visual effects in light theme; Sonar also in dark theme and at 200% browser zoom
+- Actual Sonar knob, Scout valve, and References sticker clicks; native HOTDOG keystrokes
+- Escape during HOTDOG clears the effect and collapses the factory; a second Escape enters Portfolio
+- Clicking Sonar’s screen during its effect still opens the real Anduril site; external Escape returns to the selected machine
+- Secret mode (`?eggs=1`) has no workbench/review controls
+- Automatic LAN appeared after 45.603 seconds untouched; a native X keypress immediately removed it
+- On a fresh visit, native keypresses every 15 seconds prevented LAN over 47.214 seconds ([typing check](docs/computers/eggs-v62/lan-suppressed-during-typing.jpg)); hiding the tab for 46.690 seconds produced no queued LAN on return ([hidden-tab check](docs/computers/eggs-v62/lan-hidden-tab-return.jpg))
+
+**Still unverified in a browser or physical device:** physical touch including five-tap HOTDOG and swipes, mobile Safari, audible device playback, reduced-motion visuals, 200% zoom for the refined v64 effects, and the full repeated/interrupted entry and Back/Forward matrix. Touch emulation was blocked by the organization’s DevTools restriction; it was not bypassed. Prototype unit tests cover the associated policy and lifecycle rules but do not establish these device-level results.
 
 ## Development
 
