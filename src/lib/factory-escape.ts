@@ -42,61 +42,7 @@ function localConsumerOwnsEscape(event: KeyboardEvent, document: Document): bool
   return layers.some((layer) => activeEscapeLayer(layer, document));
 }
 
-/** Own only an unclaimed Escape from the same settled factory visit. */
-export function listenForFactoryReturn({
-  window,
-  document,
-  getVisit,
-  onReturn,
-  enqueue = queueMicrotask,
-}: {
-  window: Pick<Window, "addEventListener" | "removeEventListener">;
-  document: Document;
-  getVisit: () => string | null;
-  onReturn: () => void;
-  enqueue?: (callback: () => void) => void;
-}) {
-  let disposed = false;
-  let pendingVisit: string | null = null;
-  const escape = (event: KeyboardEvent) => {
-    const visit = getVisit();
-    if (
-      disposed ||
-      !visit ||
-      !factoryEscapeAllowed({
-        key: event.key,
-        defaultPrevented: event.defaultPrevented,
-        isComposing: event.isComposing,
-        repeat: event.repeat,
-        ctrlKey: event.ctrlKey,
-        altKey: event.altKey,
-        metaKey: event.metaKey,
-        controlOwnsEscape: false,
-        overlayOpen: false,
-      }) ||
-      localConsumerOwnsEscape(event, document)
-    )
-      return;
-
-    // The window bubble phase follows controls and document listeners. Prevent
-    // native Escape's stop-loading action before the deck starts loading again.
-    event.preventDefault();
-    if (pendingVisit === visit) return;
-    pendingVisit = visit;
-    enqueue(() => {
-      if (disposed || pendingVisit !== visit) return;
-      pendingVisit = null;
-      if (getVisit() !== visit) return;
-      onReturn();
-    });
-  };
-  window.addEventListener("keydown", escape);
-  return () => {
-    disposed = true;
-    pendingVisit = null;
-    window.removeEventListener("keydown", escape);
-  };
-}
+export { listenForCooperativeEscape as listenForFactoryReturn } from "./factory-travel/escape";
 
 export type DeckEscapePhase = "entering" | "expanded" | "locked" | null;
 

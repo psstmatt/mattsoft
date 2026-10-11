@@ -232,9 +232,49 @@ describe("factory route, Back and Forward history", () => {
     };
     const skippedHistory = factoryHistoryState({}, skippedFromScout, "portfolio");
     expect(factorySessionFromHistory(skippedHistory, session).snapshot.active).toBe(1);
-    expect(factorySessionFromHistory(factoryHistoryState({}, locked, "deck"), session)).toBe(
-      session,
+    expect(
+      factorySessionFromHistory(factoryHistoryState({}, locked, "deck"), session).snapshot,
+    ).toEqual({
+      unlocked: true,
+      active: 0,
+      expanded: false,
+    });
+  });
+
+  it("restores an older Scout deck after a newer References visit without BFCache", () => {
+    const scout = { ...session, snapshot: { unlocked: true, active: 1, expanded: true } };
+    const references = { ...session, snapshot: { unlocked: true, active: 2, expanded: true } };
+    const oldDeck = factoryHistoryState({ __TSR_key: "scout-departure" }, scout, "deck");
+    // A full document reload sees the latest per-tab storage and the older entry's history.
+    const stored = parseFactorySession(JSON.stringify(references), now + 1000)!;
+    expect(factorySessionFromHistory(oldDeck, stored).snapshot).toEqual(scout.snapshot);
+    const newDeck = factoryHistoryState({ __TSR_key: "references-departure" }, references, "deck");
+    expect(factorySessionFromHistory(newDeck, stored).snapshot).toEqual(references.snapshot);
+  });
+
+  it("keeps the current deck marker synchronized through selection, collapse, reload and Back", () => {
+    const history = createMemoryHistory({ initialEntries: [session.rootHref] });
+    let current = { ...session, snapshot: { unlocked: true, active: 0, expanded: true } };
+    history.replace(session.rootHref, factoryHistoryState(history.location.state, current, "deck"));
+    current = { ...current, snapshot: { ...current.snapshot, active: 1 } };
+    history.replace(session.rootHref, factoryHistoryState(history.location.state, current, "deck"));
+    const selected = factorySessionFromHistory(
+      history.location.state,
+      parseFactorySession(JSON.stringify(current), now + 1000)!,
     );
+    expect(selected.snapshot.active).toBe(1);
+    history.push(session.rootHref, factoryHistoryState({}, current, "portfolio"));
+    history.push(session.rootHref, factoryHistoryState({}, current, "deck"));
+    current = { ...current, snapshot: { unlocked: true, active: 0, expanded: false } };
+    history.replace(session.rootHref, factoryHistoryState(history.location.state, current, "deck"));
+    const collapsed = factorySessionFromHistory(history.location.state, current);
+    expect(collapsed.snapshot).toEqual({ unlocked: true, active: 0, expanded: false });
+    history.go(-2);
+    expect(factorySessionFromHistory(history.location.state, current).snapshot).toEqual({
+      unlocked: true,
+      active: 1,
+      expanded: true,
+    });
   });
 
   it("ignores external or mismatched history markers", () => {
