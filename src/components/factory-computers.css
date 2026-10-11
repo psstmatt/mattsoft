@@ -1,0 +1,162 @@
+/* Computer factory: one shared light system, outside all carousel card bounds. */
+.secret-computer-deck {
+  --factory-light: 30 163 126;
+  --factory-light-2: 103 197 156;
+  --factory-light-3: 24 129 107;
+  --factory-light-4: 128 217 184;
+  --factory-light-opacity: 0.5;
+}
+.secret-computer-deck[data-active-kind="scout"] {
+  --factory-light: 226 143 52;
+  --factory-light-2: 231 174 92;
+  --factory-light-3: 214 104 40;
+  --factory-light-4: 242 190 106;
+}
+.secret-computer-deck[data-active-kind="references"] {
+  --factory-light: 152 147 173;
+  --factory-light-2: 165 193 194;
+  --factory-light-3: 183 166 194;
+  --factory-light-4: 142 171 191;
+}
+.secret-computer-deck[data-active-kind="anduril"] {
+  --factory-light: 39 131 165;
+  --factory-light-2: 63 171 182;
+  --factory-light-3: 58 108 169;
+  --factory-light-4: 115 194 204;
+}
+html.dark .secret-computer-deck {
+  --factory-light-opacity: 0.7;
+}
+.factory-spotlights {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+  opacity: var(--factory-light-opacity);
+  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: factory-light-arrive 600ms ease-out;
+  contain: style;
+}
+@keyframes factory-light-arrive {
+  from {
+    opacity: 0;
+  }
+}
+.factory-spotlights i {
+  position: absolute;
+  left: 50%;
+  bottom: calc(50% - var(--computer-scene-base) * 0.17);
+  width: min(48vw, 480px);
+  height: min(120vh, 1000px);
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) rotate(-32deg);
+  /* A stable alpha mask lets the actual color interpolate. Gradient token
+     replacement used to snap instantly while the carousel was still moving.
+     Retargeting this same layer also avoids stacking old and new color fields. */
+  background-color: rgb(var(--factory-light));
+  --factory-beam-mask:
+    linear-gradient(#000 65%, transparent 100%),
+    radial-gradient(ellipse at 50% 90%, rgb(0 0 0 / 0.52), rgb(0 0 0 / 0.19) 36%, transparent 69%);
+  -webkit-mask-image: var(--factory-beam-mask);
+  mask-image: var(--factory-beam-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  transition: background-color 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  filter: blur(12px);
+  border: 0;
+}
+.factory-spotlights i:nth-child(2) {
+  transform: translateX(-50%) rotate(-11deg);
+  background-color: rgb(var(--factory-light-2));
+  opacity: 0.88;
+}
+.factory-spotlights i:nth-child(3) {
+  transform: translateX(-50%) rotate(12deg);
+  background-color: rgb(var(--factory-light-3));
+  opacity: 0.88;
+}
+.factory-spotlights i:nth-child(4) {
+  transform: translateX(-50%) rotate(34deg);
+  background-color: rgb(var(--factory-light-4));
+  opacity: 0.96;
+}
+.secret-computer-deck:has(.active[data-computer-hovered="true"]) .factory-spotlights {
+  opacity: 0.95;
+}
+.secret-computer-deck:has(.active .computer-screen-hit:focus-visible) .factory-spotlights {
+  opacity: 1;
+}
+/* No inherited stage brackets, halo, pool, Sonar rings or selected underlines. */
+html .secret-computer-deck .secret-computer-card::before,
+html .secret-computer-deck .secret-computer-card::after,
+html .secret-computer-deck .secret-computer-rig::before,
+html .secret-computer-deck .secret-computer-rig::after {
+  content: none !important;
+  display: none !important;
+}
+html .secret-computer-deck .secret-computer-label h2,
+html .secret-computer-deck .secret-computer-label p {
+  text-decoration: none;
+}
+.factory-exit {
+  position: absolute;
+  z-index: 7;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(20px, env(safe-area-inset-right));
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: 11px var(--font-mono);
+}
+.factory-exit:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.factory-exit:focus-visible {
+  outline: 1px solid var(--foreground);
+  outline-offset: 3px;
+}
+.secret-computer-deck[data-entering="true"] .factory-spotlights,
+.secret-computer-deck[data-entering="true"] .factory-exit {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.secret-computer-deck[data-entering="true"] .factory-spotlights {
+  animation: none;
+  transition-duration: 160ms;
+}
+@media (max-width: 700px) {
+  .factory-spotlights i {
+    width: 68vw;
+    height: 100svh;
+    filter: blur(10px);
+  }
+  .factory-exit {
+    right: max(12px, env(safe-area-inset-right));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .factory-spotlights,
+  .factory-spotlights i {
+    transition: none;
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .factory-spotlights {
+    display: none;
+  }
+  html
+    .secret-computer-deck
+    .active:has(.computer-screen-hit:focus-visible)
+    .secret-computer-label
+    p {
+    outline: 2px solid Highlight;
+    outline-offset: 5px;
+  }
+}

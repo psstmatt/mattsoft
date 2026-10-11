@@ -7,6 +7,7 @@ import {
 import {
   previewSourceDimensions,
   previewSampleHeight,
+  screenSourceForViewport,
 } from "../public/experience/konami-screen-source.js";
 import {
   mountCanvasComputer,
@@ -271,6 +272,14 @@ describe("prepared preview motion", () => {
     expect(
       previewSampleHeight({ naturalWidth: 1188, naturalHeight: 2168, cssWidth: 1188 }, true, 844),
     ).toBeCloseTo(0.428102, 5);
+  });
+  it("uses the real responsive Sonar landing on narrow screens without changing other captures", () => {
+    expect(screenSourceForViewport("anduril", 390)).toBe("/previews/anduril-descent-portrait.jpg");
+    expect(screenSourceForViewport("anduril", 700)).toBe("/previews/anduril-descent-portrait.jpg");
+    expect(screenSourceForViewport("anduril", 701)).toBe("/previews/anduril-descent.jpg");
+    expect(screenSourceForViewport("anduril", undefined)).toBe("/previews/anduril-descent.jpg");
+    expect(screenSourceForViewport("scout", 390)).toBe("/previews/scout-header-only.jpg");
+    expect(screenSourceForViewport("references", 390)).toBe("/previews/references-tall.jpg");
   });
   it("changes actual Canvas pixels, pauses inactive/hidden cards, and resumes without a jump", async () => {
     const test = previewEnvironment();

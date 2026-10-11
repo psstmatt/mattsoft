@@ -6,7 +6,12 @@ import { readFileSync } from "node:fs";
 import { SecretComputerDeck } from "../src/components/secret-computer-deck";
 import { screenSourceForViewport } from "../public/experience/konami-screen-source.js";
 
-const props = { surface: { current: null }, onComplete() {} };
+const props = {
+  surface: { current: null },
+  onComplete() {},
+  onFactoryChange() {},
+  onExternalEntry() {},
+};
 const renderDeck = () => renderToStaticMarkup(createElement(SecretComputerDeck, props));
 
 describe("production Sonar deck", () => {
@@ -37,6 +42,27 @@ describe("production Sonar deck", () => {
     );
   });
 
+  it("restores earned expansion and collapses an unlocked factory to the green computer", () => {
+    for (const expanded of [false, true]) {
+      const html = renderToStaticMarkup(
+        createElement(SecretComputerDeck, {
+          ...props,
+          restoredFactory: { unlocked: true, active: 3, expanded },
+        }),
+      );
+      expect(html).toContain(`data-unlocked="${expanded}"`);
+      expect(html).toContain(`data-active-kind="${expanded ? "anduril" : "portfolio"}"`);
+      expect(html).toContain(expanded ? "Exit factory" : "Show computers");
+      expect(html.includes('aria-label="Secret computers"')).toBe(expanded);
+      const cards = [...html.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(
+        ([card]) => card,
+      );
+      for (const [index, card] of cards.entries()) {
+        expect(card.includes('inert=""')).toBe(!expanded && index !== 0);
+      }
+    }
+  });
+
   it("gives every numberless caption an accessible destination name and fixes Sonar to Echo", () => {
     const html = renderDeck();
     const captions = [
@@ -48,7 +74,7 @@ describe("production Sonar deck", () => {
       expect(captions[index][1]).toContain(`aria-label="${label}"`);
     }
     expect(html).toContain('class="secret-computer-label sonar-caption" data-sonar-type="echo"');
-    expect(html).toContain('data-focus-style="tidal"');
+    expect(html).toContain('data-focus-style="factory"');
   });
 
   it("selects the portrait capture only for a narrow Anduril viewport", () => {
