@@ -330,6 +330,10 @@ export const catalog: CatalogGroup[] = [
 
 export const sidequests: { title: string; description: string; url?: string }[] = [
   {
+    title: "Crying Cat Studios",
+    description: "Making video games with a friend.",
+  },
+  {
     title: "Tidal House",
     description: "Vintage A-frame chalets reimagined for a coastal getaway in Ocean Shores.",
     url: "https://thetidalhouse.com/about",
