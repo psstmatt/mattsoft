@@ -22,6 +22,7 @@ import { LEGACY_HASH_SCRIPT } from "../lib/legacy-hashes";
 import { canonicalUrl } from "../lib/site-metadata";
 import { allowCanonicalTelemetry } from "../lib/telemetry";
 import { THEME_FAVICONS, THEME_STORAGE_KEY } from "../lib/theme";
+import { SafariEdges } from "../components/safari-edges";
 
 const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
 const FAVICON_SCRIPT = `(function(){var f=${JSON.stringify(THEME_FAVICONS)}[document.documentElement.classList.contains('dark')?'dark':'light'];for(var id in f){var l=document.getElementById(id);if(l)l.setAttribute('href',f[id]);}})();`;
@@ -72,7 +73,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "oklch(0.155 0.004 75)" },
       { title: "Matt Reynolds — Product & Software Designer" },
       {
         name: "description",
@@ -141,6 +143,11 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: LEGACY_HASH_SCRIPT }} />
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var m=document.querySelector('meta[name="theme-color"]');var c=getComputedStyle(document.documentElement).getPropertyValue('--edge-top-background').trim();if(m&&c)m.content=c;})();`,
+          }}
+        />
         <script dangerouslySetInnerHTML={{ __html: COMPUTER_BOOTSTRAP }} />
         <noscript>
           <style>
@@ -153,6 +160,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <SafariEdges />
         <Analytics beforeSend={allowCanonicalTelemetry} />
         <SpeedInsights beforeSend={allowCanonicalTelemetry} />
         <Scripts />

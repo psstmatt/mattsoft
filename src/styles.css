@@ -251,3 +251,67 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Seamless mobile Safari edges (joshpuckett.me/seamless-mobile-safari).
+   Direct body children keep the fixed paint outside transformed app content. */
+:root {
+  --edge-top-background: var(--background);
+  --edge-bottom-background: var(--background);
+  --edge-top-size: 0px;
+  --edge-bottom-size: 0px;
+}
+html {
+  background-color: var(--edge-top-background);
+}
+body {
+  background-color: var(--edge-bottom-background);
+}
+.edge-top::after,
+.edge-bottom::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  pointer-events: none;
+}
+.edge-top::after {
+  top: 0;
+  height: var(--edge-top-size);
+  background: var(--edge-top-background);
+}
+.edge-bottom::after {
+  bottom: 0;
+  height: var(--edge-bottom-size);
+  background: var(--edge-bottom-background);
+}
+@media (hover: none) and (pointer: coarse) {
+  :root {
+    --edge-top-size: max(12px, env(safe-area-inset-top, 0px));
+    --edge-bottom-size: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+  body {
+    padding-top: var(--edge-top-size);
+    padding-bottom: var(--edge-bottom-size);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
+@media print {
+  .edge-top,
+  .edge-bottom {
+    display: none;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    padding: 0;
+  }
+  .edge-top,
+  .edge-bottom {
+    display: none;
+  }
+}
